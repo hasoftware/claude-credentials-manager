@@ -95,6 +95,7 @@ func TestEmitRequest_RedactsAuthAndCookie(t *testing.T) {
 	h.Set("Authorization", "Bearer secrettoken")
 	h.Set("Cookie", "sid=abc")
 	h.Set("Proxy-Authorization", "secret")
+	h.Set("X-Api-Key", "sk-ant-api03-secret")
 	h.Set("X-Custom", "ok")
 
 	out := captureStderr(t, func() {
@@ -116,6 +117,9 @@ func TestEmitRequest_RedactsAuthAndCookie(t *testing.T) {
 	}
 	if headers["Proxy-Authorization"] != "[REDACTED]" {
 		t.Errorf("Proxy-Authorization not redacted: %v", headers)
+	}
+	if headers["X-Api-Key"] != "[REDACTED]" {
+		t.Errorf("X-Api-Key not redacted: %v", headers)
 	}
 	if headers["X-Custom"] != "ok" {
 		t.Errorf("X-Custom should pass through: %v", headers)

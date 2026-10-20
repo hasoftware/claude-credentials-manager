@@ -76,12 +76,15 @@ func Enabled() bool {
 }
 
 // sensitiveHeaders lists header keys redacted from every emitted
-// event. Compared case-insensitively.
+// event. Compared case-insensitively. x-api-key matters because in.raw
+// is traced before the share proxy strips it: a remote Claude Code
+// with ANTHROPIC_API_KEY set sends its real key there.
 var sensitiveHeaders = map[string]struct{}{
-	"authorization": {},
-	"cookie":        {},
-	"set-cookie":    {},
+	"authorization":       {},
+	"cookie":              {},
+	"set-cookie":          {},
 	"proxy-authorization": {},
+	"x-api-key":           {},
 }
 
 // redactHeaders returns a copy of h with sensitive values replaced by
