@@ -2,7 +2,7 @@
 "use strict";
 
 // Thin shim that locates the platform-specific prebuilt binary shipped as an
-// optional dependency (e.g. ccm-go.linux-x64) and execs it with the current
+// optional dependency (e.g. @hasoftware/ccm.linux-x64) and execs it with the current
 // argv. The sub-package layout and naming is kept in lock-step with this
 // file — see scripts/publish-npm.sh for how the sub-packages are built.
 //
@@ -15,7 +15,7 @@ var path = require("path");
 var spawnSync = require("child_process").spawnSync;
 
 var platformKey = process.platform + "-" + process.arch;
-var subPkg = "ccm-go." + platformKey;
+var subPkg = "@hasoftware/ccm." + platformKey;
 
 var pkgDir;
 try {
@@ -36,9 +36,9 @@ try {
     "The optional dependency '" + subPkg + "' was not installed.\n" +
     "Supported platforms: " + supported.join(", ") + ".\n" +
     "If your platform is listed, try reinstalling:\n" +
-    "  npm install -g ccm-go\n" +
+    "  npm install -g @hasoftware/ccm\n" +
     "Otherwise please file an issue at\n" +
-    "  https://github.com/hbinhng/claude-credentials-manager/issues\n"
+    "  https://github.com/hasoftware/claude-credentials-manager/issues\n"
   );
   process.exit(1);
 }

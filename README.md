@@ -1,5 +1,7 @@
 # ccm — Claude Credentials Manager
 
+> Maintained fork of [hbinhng/claude-credentials-manager](https://github.com/hbinhng/claude-credentials-manager), continued as the 2.x line and published to npm as `@hasoftware/ccm`.
+
 A single-binary Go CLI for managing multiple Claude OAuth sessions locally. Switch between accounts for Claude Code, share a credential with another machine over a Cloudflare Quick Tunnel without ever copying the token, or launch `claude` against a specific credential without touching the active one.
 
 ## Install
@@ -7,13 +9,15 @@ A single-binary Go CLI for managing multiple Claude OAuth sessions locally. Swit
 ### npm
 
 ```bash
-npm install -g ccm-go
+npm install -g @hasoftware/ccm
 ```
+
+If you previously installed the upstream `ccm-go` package, remove it first (`npm uninstall -g ccm-go`): both provide the `ccm` command.
 
 ### Homebrew (macOS / Linux)
 
 ```bash
-brew install hbinhng/tap/ccm
+brew install hasoftware/tap/ccm
 ```
 
 Installs the `ccm` binary and the `man ccm` manual page.
@@ -21,7 +25,7 @@ Installs the `ccm` binary and the `man ccm` manual page.
 ### Windows (PowerShell)
 
 ```powershell
-iwr https://raw.githubusercontent.com/hbinhng/claude-credentials-manager/main/scripts/install.ps1 | iex
+iwr https://raw.githubusercontent.com/hasoftware/claude-credentials-manager/main/scripts/install.ps1 | iex
 ```
 
 Downloads the latest release for your CPU (amd64 / arm64) into `%LOCALAPPDATA%\Programs\ccm\ccm.exe` and adds that directory to your user PATH. No admin / elevation required. Open a new terminal once the script finishes so `ccm` is on `$env:Path`.
@@ -29,12 +33,12 @@ Downloads the latest release for your CPU (amd64 / arm64) into `%LOCALAPPDATA%\P
 Pin a specific version or override the install directory by downloading the script and passing flags:
 
 ```powershell
-.\install.ps1 -Version v1.21.1 -InstallDir 'C:\tools\ccm'
+.\install.ps1 -Version v2.0.0 -InstallDir 'C:\tools\ccm'
 ```
 
 ### Download binary
 
-Grab the latest release for your platform from [Releases](https://github.com/hbinhng/claude-credentials-manager/releases), then:
+Grab the latest release for your platform from [Releases](https://github.com/hasoftware/claude-credentials-manager/releases), then:
 
 ```bash
 chmod +x ccm-*        # Linux / macOS
@@ -44,7 +48,7 @@ sudo mv ccm-* /usr/local/bin/ccm
 ### Build from source
 
 ```bash
-git clone https://github.com/hbinhng/claude-credentials-manager.git
+git clone https://github.com/hasoftware/claude-credentials-manager.git
 cd claude-credentials-manager
 make
 ```
@@ -370,4 +374,4 @@ For every command, flag, and environment variable in exhaustive detail, see `man
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE). Originally created by [hbinhng](https://github.com/hbinhng).

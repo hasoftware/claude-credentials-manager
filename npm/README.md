@@ -5,8 +5,10 @@ Manage multiple Claude OAuth sessions locally with quick switching between accou
 ## Install
 
 ```bash
-npm install -g ccm-go
+npm install -g @hasoftware/ccm
 ```
+
+Maintained fork of [hbinhng/claude-credentials-manager](https://github.com/hbinhng/claude-credentials-manager). If you have the upstream `ccm-go` package installed, run `npm uninstall -g ccm-go` first: both provide the `ccm` command.
 
 ## Usage
 
@@ -59,10 +61,10 @@ e5f6a7b8  work      expired 2h ago       -
 
 ## Also available via
 
-- **Homebrew**: `brew install hbinhng/tap/ccm`
-- **Go**: `go install github.com/hbinhng/claude-credentials-manager@latest`
-- **Binary**: [GitHub Releases](https://github.com/hbinhng/claude-credentials-manager/releases)
+- **Homebrew**: `brew install hasoftware/tap/ccm`
+- **Go**: `go install github.com/hasoftware/claude-credentials-manager/v2@latest`
+- **Binary**: [GitHub Releases](https://github.com/hasoftware/claude-credentials-manager/releases)
 
 ## License
 
-MIT — [GitHub](https://github.com/hbinhng/claude-credentials-manager)
+MIT — [GitHub](https://github.com/hasoftware/claude-credentials-manager)

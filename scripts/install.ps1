@@ -10,17 +10,17 @@
     shells. No admin / elevation required - every action is per-user.
 
 .PARAMETER Version
-    Optional release tag to pin (e.g. v1.21.1). Defaults to the latest
+    Optional release tag to pin (e.g. v2.0.0). Defaults to the latest
     release published on GitHub.
 
 .PARAMETER InstallDir
     Override the install directory. Defaults to %LOCALAPPDATA%\Programs\ccm.
 
 .EXAMPLE
-    iwr https://raw.githubusercontent.com/hbinhng/claude-credentials-manager/main/scripts/install.ps1 | iex
+    iwr https://raw.githubusercontent.com/hasoftware/claude-credentials-manager/main/scripts/install.ps1 | iex
 
 .EXAMPLE
-    .\install.ps1 -Version v1.21.1
+    .\install.ps1 -Version v2.0.0
 #>
 
 [CmdletBinding()]
@@ -37,7 +37,7 @@ $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = `
     [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 
-$Repo = 'hbinhng/claude-credentials-manager'
+$Repo = 'hasoftware/claude-credentials-manager'
 
 if (-not $InstallDir -or $InstallDir.Trim() -eq '') {
     if (-not $env:LOCALAPPDATA) {

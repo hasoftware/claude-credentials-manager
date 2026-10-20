@@ -15,8 +15,10 @@
 # by Linux integration tests under internal/shellalias/.
 #
 # Requires:
-#   - passwordless SSH to 192.168.1.11 (PowerShell 5.1; ccm pre-installed
-#     via npm; see reference-windows-e2e-box memory).
+#   - passwordless SSH to a Windows box (PowerShell 5.1) with ccm
+#     pre-installed via `npm install -g @hasoftware/ccm`.
+#   - HOST (ssh target) and REMOTE_USER (Windows account on HOST) set
+#     in the environment.
 #
 # Usage:
 #   make win-e2e
@@ -25,12 +27,13 @@
 
 set -euo pipefail
 
-HOST="${HOST:-192.168.1.11}"
+HOST="${HOST:?set HOST to the Windows e2e box (ssh target)}"
+REMOTE_USER="${REMOTE_USER:?set REMOTE_USER to the Windows account on $HOST}"
 ALIAS_NAME="${ALIAS_NAME:-ccm-test-cld}"
 # Remote install path of the ccm.exe shipped by the npm package.
 # The Node shim (ccm.ps1 → bin/ccm) resolves the platform binary from the
-# ccm-go.win32-x64 optional-dependency sub-package.
-REMOTE_BIN_DEFAULT='C:\Users\hbinhng\AppData\Roaming\npm\node_modules\ccm-go\node_modules\ccm-go.win32-x64\bin\ccm.exe'
+# @hasoftware/ccm.win32-x64 optional-dependency sub-package.
+REMOTE_BIN_DEFAULT='C:\Users\'"$REMOTE_USER"'\AppData\Roaming\npm\node_modules\@hasoftware\ccm\node_modules\@hasoftware\ccm.win32-x64\bin\ccm.exe'
 REMOTE_BIN="${REMOTE_BIN:-$REMOTE_BIN_DEFAULT}"
 
 # Use a unique fake-cred name in the captured payload. ccm alias doesn't
@@ -48,8 +51,8 @@ GOOS=windows GOARCH=amd64 CGO_ENABLED=0 \
 
 step "ship to $HOST"
 # On Windows SSH hosts, scp requires the Windows drive-letter path form.
-# $env:TEMP expands to C:\Users\hbinhng\AppData\Local\Temp on this box.
-WIN_TEMP='C:/Users/hbinhng/AppData/Local/Temp'
+# $env:TEMP expands to C:\Users\<REMOTE_USER>\AppData\Local\Temp on the box.
+WIN_TEMP="C:/Users/$REMOTE_USER/AppData/Local/Temp"
 scp -q /tmp/ccm.exe "$HOST:$WIN_TEMP/ccm.exe"
 # Kill any running ccm process first to avoid file-lock on the binary.
 ssh "$HOST" "powershell -NoProfile -Command \"Get-Process ccm -ErrorAction SilentlyContinue | Stop-Process -Force\"" >/dev/null 2>&1 || true

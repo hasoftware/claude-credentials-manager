@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Stage and publish ccm-go and its six per-platform sub-packages.
+# Stage and publish @hasoftware/ccm and its six per-platform sub-packages.
 #
 # Usage:
 #   scripts/publish-npm.sh VERSION [--dry-run]
@@ -39,7 +39,9 @@ NPM_DIR="$ROOT/npm"
 PLATFORMS_DIR="$NPM_DIR/platforms"
 
 main_pkg="$NPM_DIR/package.json"
-current_version="$(node -p "require('$main_pkg').version")"
+# Relative require: an absolute MSYS path (/c/...) is not resolvable by a
+# native Windows node, which Git Bash users run.
+current_version="$(cd "$NPM_DIR" && node -p "require('./package.json').version")"
 if [ "$current_version" != "$VERSION" ]; then
   echo "error: $main_pkg version is $current_version, expected $VERSION" >&2
   echo "       bump npm/package.json (including optionalDependencies) before publishing" >&2
@@ -61,21 +63,21 @@ stage() {
 
   cat > "$dest/package.json" <<JSON
 {
-  "name": "ccm-go.${key}",
+  "name": "@hasoftware/ccm.${key}",
   "version": "${VERSION}",
-  "description": "${key} prebuilt binary for ccm-go (Claude Credentials Manager)",
+  "description": "${key} prebuilt binary for @hasoftware/ccm (Claude Credentials Manager)",
   "os": ["${nodeos}"],
   "cpu": ["${nodearch}"],
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hbinhng/claude-credentials-manager.git"
+    "url": "git+https://github.com/hasoftware/claude-credentials-manager.git"
   },
-  "homepage": "https://github.com/hbinhng/claude-credentials-manager"
+  "homepage": "https://github.com/hasoftware/claude-credentials-manager"
 }
 JSON
 
-  echo "    staged ccm-go.${key}"
+  echo "    staged @hasoftware/ccm.${key}"
 }
 
 publish_dir() {
@@ -105,4 +107,4 @@ done
 echo "==> Publishing main package"
 publish_dir "$NPM_DIR"
 
-echo "==> Done — ccm-go@$VERSION"
+echo "==> Done — @hasoftware/ccm@$VERSION"

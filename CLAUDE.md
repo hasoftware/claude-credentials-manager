@@ -25,15 +25,15 @@ All Make targets build with `CGO_ENABLED=0` and `-trimpath -ldflags="-s -w"`. Ev
 
 Three distribution channels, all manual:
 
-1. **GitHub Release** — tag `vX.Y.Z`, attach the six binaries + `ccm.1` man page
-2. **npm** — bump `npm/package.json` version, `cd npm && npm publish` (the postinstall script downloads binaries from the GitHub release)
-3. **Homebrew** — update `Formula/ccm.rb` in `hbinhng/homebrew-tap` with new version, URLs, and SHA256 hashes
+1. **GitHub Release** — tag `vX.Y.Z` on `hasoftware/claude-credentials-manager`, attach the six binaries + `ccm.1` man page
+2. **npm** — bump `npm/package.json` (version and every `optionalDependencies` entry), `make dist`, then `scripts/publish-npm.sh X.Y.Z`: it publishes the six `@hasoftware/ccm.<platform>` binary packages first, then `@hasoftware/ccm`
+3. **Homebrew** — update `Formula/ccm.rb` in `hasoftware/homebrew-tap` with new version, URLs, and SHA256 hashes
 
 Version is tracked only in `npm/package.json`. There is no Go-level version constant.
 
 ## Architecture
 
-Single-binary Go CLI (Cobra) for managing multiple Claude OAuth credentials locally.
+Single-binary Go CLI (Cobra) for managing multiple Claude OAuth credentials locally. This repo is the hasoftware fork of `hbinhng/claude-credentials-manager`, continued as 2.x; the Go module path is `github.com/hasoftware/claude-credentials-manager/v2` (the `/v2` suffix is required for v2+ tags).
 
 ```
 main.go → cmd.Execute()
