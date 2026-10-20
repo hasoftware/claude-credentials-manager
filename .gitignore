@@ -4,5 +4,6 @@ dist/
 npm/bin/*
 !npm/bin/ccm
 npm/platforms/
+npm/LICENSE
 docs/superpowers/
 .claire/

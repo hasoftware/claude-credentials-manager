@@ -60,6 +60,7 @@ stage() {
   mkdir -p "$dest/bin"
   cp "$src" "$dest/bin/ccm${ext}"
   chmod +x "$dest/bin/ccm${ext}"
+  cp "$ROOT/LICENSE" "$dest/LICENSE"
 
   cat > "$dest/package.json" <<JSON
 {
@@ -105,6 +106,9 @@ for key in darwin-x64 darwin-arm64 linux-x64 linux-arm64 win32-x64 win32-arm64; 
 done
 
 echo "==> Publishing main package"
+# The MIT notice must ship with every copy; npm packs LICENSE from the
+# package root, which for the main package is npm/, not the repo root.
+cp "$ROOT/LICENSE" "$NPM_DIR/LICENSE"
 publish_dir "$NPM_DIR"
 
 echo "==> Done — @hasoftware/ccm@$VERSION"
