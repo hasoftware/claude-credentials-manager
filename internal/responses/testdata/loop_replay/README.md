@@ -1,18 +1,28 @@
 # Loop replay fixture
 
-Trimmed/redacted excerpt from a real ccm trace that exhibited the
-TaskUpdate loop documented in
-`docs/superpowers/specs/2026-05-10-codex-loop-comprehensive-fix-design.md`.
+Synthetic trace in the `CCM_TRACE=1` JSONL format, modelled on a Claude
+Code session that fell into a TaskUpdate loop through the Responses
+translator. It is generated, not captured — every value comes from
+`gen/main.go`:
 
-- 25 inbound `/v1/messages` requests + their paired `upstream.resp.event` lines.
-- Loop entry point lands inside the window (turn 16 → onward calls only TaskUpdate).
-- Redacted: trace already strips Authorization/Cookie at write-time.
+```bash
+go run ./internal/responses/testdata/loop_replay/gen > internal/responses/testdata/loop_replay/sample.jsonl
+```
 
-The Phase 10 regression test (`loopreg_test.go`) replays this fixture
-through `TranslateRequest` and asserts that post-fix translator output
-preserves the four invariants Phases 1, 2, 3, and 9 ship.
+The generator is deterministic; regenerating must produce no diff.
 
-## Anonymization
+- 8 inbound `/v1/messages` requests (`in.raw`), each paired by `reqId`
+  with one `upstream.resp.event` line holding that turn's whole upstream
+  SSE stream.
+- Turns 4–6 repeat the same pair of TaskUpdate calls — the loop.
+- Turn 7's `find` output is larger than the 64 KiB tool_result cap, so
+  the final request exercises truncation.
+- Every upstream turn carries a distinct `response.id`.
 
-- Author email replaced with `author@example.com`.
-- Session UUIDs replaced with `00000000-0000-0000-0000-000000000001`.
+`loopreg_test.go` replays the requests through `TranslateRequest`
+(tool_result cap) and the streams through `StreamTranslator` (distinct
+`message_start` ids per turn).
+
+Never commit a real trace here: a capture records full request bodies —
+system prompt, file contents, tool output — plus account and client
+identifiers. Only headers are redacted at write time.

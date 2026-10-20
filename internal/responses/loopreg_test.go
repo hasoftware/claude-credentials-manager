@@ -13,7 +13,11 @@ import (
 // truncation cap is enforced: every function_call_output.output in
 // the outbound input[] is <= toolResultMaxBytes.
 func TestLoopReplay_NoToolResultExceeds64KB(t *testing.T) {
-	for i, body := range loadFixtureBodies(t) {
+	bodies := loadFixtureBodies(t)
+	if !hasOversizedToolResult(t, bodies) {
+		t.Fatalf("fixture has no tool_result over %d bytes; the cap is never exercised", toolResultMaxBytes)
+	}
+	for i, body := range bodies {
 		out, err := TranslateRequest(body, RequestOpts{TargetModel: "gpt-5"})
 		if err != nil {
 			t.Fatalf("turn %d: TranslateRequest: %v", i, err)
@@ -90,6 +94,38 @@ func TestLoopReplay_DistinctMessageIDsPerTurn(t *testing.T) {
 		}
 		seen[startID] = i
 	}
+}
+
+// hasOversizedToolResult reports whether any inbound tool_result string
+// exceeds toolResultMaxBytes, so the cap assertion above is not vacuous.
+func hasOversizedToolResult(t *testing.T, bodies [][]byte) bool {
+	t.Helper()
+	for i, body := range bodies {
+		var req struct {
+			Messages []struct {
+				Content json.RawMessage `json:"content"`
+			} `json:"messages"`
+		}
+		if err := json.Unmarshal(body, &req); err != nil {
+			t.Fatalf("body %d: unmarshal: %v", i, err)
+		}
+		for _, m := range req.Messages {
+			var blocks []struct {
+				Type    string          `json:"type"`
+				Content json.RawMessage `json:"content"`
+			}
+			if json.Unmarshal(m.Content, &blocks) != nil {
+				continue // plain-string message content
+			}
+			for _, b := range blocks {
+				var s string
+				if b.Type == "tool_result" && json.Unmarshal(b.Content, &s) == nil && len(s) > toolResultMaxBytes {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 // loadFixtureTurns reconstructs one SSE stream per turn from the
