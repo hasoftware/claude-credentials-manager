@@ -9,8 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/share/alias"
-	"github.com/hbinhng/claude-credentials-manager/internal/share/middleware"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/share/alias"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/share/middleware"
 )
 
 func TestAliasRewrite_MatchedRewritesBody(t *testing.T) {

@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	codexoauth "github.com/hbinhng/claude-credentials-manager/internal/codex/oauth"
-	"github.com/hbinhng/claude-credentials-manager/internal/oauth"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	codexoauth "github.com/hasoftware/claude-credentials-manager/v2/internal/codex/oauth"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/oauth"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 // setupFakeHome points HOME at a tempdir so store.Load/Save touch a

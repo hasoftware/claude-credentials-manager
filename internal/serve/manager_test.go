@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/share"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/share"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 // fakeSession is a programmable share.Session for manager tests.

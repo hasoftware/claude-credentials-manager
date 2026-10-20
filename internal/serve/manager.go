@@ -19,8 +19,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/share"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/share"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 // ErrAlreadyStarted is returned by Manager.Start when a session for

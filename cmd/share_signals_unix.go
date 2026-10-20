@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/share"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/share"
 )
 
 func init() {

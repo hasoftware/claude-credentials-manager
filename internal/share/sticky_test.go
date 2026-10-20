@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/oauth"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/oauth"
 )
 
 // stickyPool builds a pool and switches it into sticky mode with a fake

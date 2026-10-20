@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/codex/transport"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/codex/transport"
 )
 
 func TestTransport_Do_RoundTripsBody(t *testing.T) {

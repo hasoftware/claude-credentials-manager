@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 func setHomeForLockTestWin(t *testing.T) string {

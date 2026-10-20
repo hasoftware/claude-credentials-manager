@@ -17,9 +17,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/serve"
-	"github.com/hbinhng/claude-credentials-manager/internal/share"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/serve"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/share"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 	"github.com/spf13/cobra"
 )
 

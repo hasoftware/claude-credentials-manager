@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 // withLock runs fn while holding an exclusive flock on the credential

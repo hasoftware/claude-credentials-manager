@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/share/alias"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/share/alias"
 )
 
 // AliasRewrite consults the alias map and rewrites the inbound body's

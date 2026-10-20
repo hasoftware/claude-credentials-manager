@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/oauth"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/oauth"
 )
 
 // parseRatelimitHeaders extracts the per-window quota state from an

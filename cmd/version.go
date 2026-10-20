@@ -7,7 +7,7 @@ import (
 )
 
 // Version, Commit, and BuildDate are populated at link time by the Makefile
-// via -ldflags "-X github.com/hbinhng/claude-credentials-manager/cmd.<name>=...".
+// via -ldflags "-X github.com/hasoftware/claude-credentials-manager/v2/cmd.<name>=...".
 // VERSION comes from npm/package.json (the canonical version source),
 // COMMIT from `git rev-parse --short HEAD`, and BUILD_DATE from `date -u`
 // in ISO-8601. A plain `go build .` (bypassing the Makefile) leaves these

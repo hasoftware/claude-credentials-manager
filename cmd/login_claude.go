@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/credflow"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/credflow"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 	"github.com/spf13/cobra"
 )
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 // Use activates cred for the codex CLI. Backs up any existing foreign

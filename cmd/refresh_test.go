@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/credflow"
-	codexoauth "github.com/hbinhng/claude-credentials-manager/internal/codex/oauth"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/credflow"
+	codexoauth "github.com/hasoftware/claude-credentials-manager/v2/internal/codex/oauth"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 // seedRefreshCred writes a minimal credential file so store.Resolve

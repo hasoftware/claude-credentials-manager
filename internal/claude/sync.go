@@ -3,7 +3,7 @@ package claude
 import (
 	"fmt"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 // Sync reconciles the active backend entry into the matching store

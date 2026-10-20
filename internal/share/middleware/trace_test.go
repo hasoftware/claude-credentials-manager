@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/trace"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/trace"
 )
 
 // captureStderr runs fn with os.Stderr redirected to a pipe and

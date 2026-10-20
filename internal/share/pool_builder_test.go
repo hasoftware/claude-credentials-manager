@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/oauth"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/oauth"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 // withFakeUsage installs a fake oauth.FetchUsageFn for the test.

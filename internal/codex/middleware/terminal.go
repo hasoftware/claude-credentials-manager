@@ -19,11 +19,11 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/codex/identity"
-	"github.com/hbinhng/claude-credentials-manager/internal/codex/transport"
-	"github.com/hbinhng/claude-credentials-manager/internal/responses"
-	sharemw "github.com/hbinhng/claude-credentials-manager/internal/share/middleware"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/codex/identity"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/codex/transport"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/responses"
+	sharemw "github.com/hasoftware/claude-credentials-manager/v2/internal/share/middleware"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 // TerminalOpts configures the codex terminal handler.

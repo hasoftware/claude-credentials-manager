@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 // passthroughEntryState satisfies poolEntryState for pool entries

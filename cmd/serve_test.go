@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/serve"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/serve"
 	"github.com/spf13/cobra"
 )
 

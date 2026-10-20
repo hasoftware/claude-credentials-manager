@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	codexoauth "github.com/hbinhng/claude-credentials-manager/internal/codex/oauth"
+	codexoauth "github.com/hasoftware/claude-credentials-manager/v2/internal/codex/oauth"
 )
 
 func mkJWT(t *testing.T, payload string) string {

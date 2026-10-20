@@ -13,7 +13,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 // pinnedCloudflaredVersion is the cloudflared release we download if the

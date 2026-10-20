@@ -6,8 +6,8 @@ import (
 	"io"
 	"os"
 
-	codexoauth "github.com/hbinhng/claude-credentials-manager/internal/codex/oauth"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	codexoauth "github.com/hasoftware/claude-credentials-manager/v2/internal/codex/oauth"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 	"github.com/spf13/cobra"
 )
 

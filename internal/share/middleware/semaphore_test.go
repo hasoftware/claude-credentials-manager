@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/share/middleware"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/share/middleware"
 )
 
 func TestCredSemaphore_LimitsConcurrency(t *testing.T) {

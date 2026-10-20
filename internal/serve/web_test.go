@@ -13,11 +13,11 @@ import (
 	"testing/fstest"
 	"time"
 
-	codexoauth "github.com/hbinhng/claude-credentials-manager/internal/codex/oauth"
-	"github.com/hbinhng/claude-credentials-manager/internal/credflow"
-	"github.com/hbinhng/claude-credentials-manager/internal/oauth"
-	"github.com/hbinhng/claude-credentials-manager/internal/share"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	codexoauth "github.com/hasoftware/claude-credentials-manager/v2/internal/codex/oauth"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/credflow"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/oauth"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/share"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 // ---- helpers -----------------------------------------------------

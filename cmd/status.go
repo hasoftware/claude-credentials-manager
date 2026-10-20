@@ -10,12 +10,12 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/claude"
-	"github.com/hbinhng/claude-credentials-manager/internal/codex"
-	codexoauth "github.com/hbinhng/claude-credentials-manager/internal/codex/oauth"
-	grokoauth "github.com/hbinhng/claude-credentials-manager/internal/grok/oauth"
-	"github.com/hbinhng/claude-credentials-manager/internal/oauth"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/claude"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/codex"
+	codexoauth "github.com/hasoftware/claude-credentials-manager/v2/internal/codex/oauth"
+	grokoauth "github.com/hasoftware/claude-credentials-manager/v2/internal/grok/oauth"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/oauth"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 	"github.com/spf13/cobra"
 )
 

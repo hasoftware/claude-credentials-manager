@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/httpx"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/httpx"
 )
 
 // TestTransportUnsetIgnoresHttpsProxy verifies that when CCM_PROXY is

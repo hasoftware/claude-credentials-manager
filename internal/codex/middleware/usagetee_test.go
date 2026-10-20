@@ -4,7 +4,7 @@ import (
 	"sync"
 	"testing"
 
-	codexmw "github.com/hbinhng/claude-credentials-manager/internal/codex/middleware"
+	codexmw "github.com/hasoftware/claude-credentials-manager/v2/internal/codex/middleware"
 )
 
 // TestUsageTee_RecordAndSnapshot verifies basic record + ordered snapshot.

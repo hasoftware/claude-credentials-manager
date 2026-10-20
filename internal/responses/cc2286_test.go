@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/responses"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/responses"
 )
 
 func loadCC2286(t *testing.T) []byte {

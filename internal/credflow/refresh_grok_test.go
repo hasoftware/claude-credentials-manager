@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	grokoauth "github.com/hbinhng/claude-credentials-manager/internal/grok/oauth"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	grokoauth "github.com/hasoftware/claude-credentials-manager/v2/internal/grok/oauth"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 func TestRefreshGrokLocked_RotatesAndPersists(t *testing.T) {

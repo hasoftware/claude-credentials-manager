@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/credflow"
-	"github.com/hbinhng/claude-credentials-manager/internal/share"
-	"github.com/hbinhng/claude-credentials-manager/internal/share/alias"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/credflow"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/share"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/share/alias"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 	"github.com/spf13/cobra"
 )
 

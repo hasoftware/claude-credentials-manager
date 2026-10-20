@@ -12,16 +12,16 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/codex/identity"
-	codexmw "github.com/hbinhng/claude-credentials-manager/internal/codex/middleware"
-	"github.com/hbinhng/claude-credentials-manager/internal/codex/transport"
-	grokmw "github.com/hbinhng/claude-credentials-manager/internal/grok/middleware"
-	"github.com/hbinhng/claude-credentials-manager/internal/httpx"
-	"github.com/hbinhng/claude-credentials-manager/internal/oauth"
-	"github.com/hbinhng/claude-credentials-manager/internal/share/alias"
-	"github.com/hbinhng/claude-credentials-manager/internal/share/middleware"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
-	"github.com/hbinhng/claude-credentials-manager/internal/trace"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/codex/identity"
+	codexmw "github.com/hasoftware/claude-credentials-manager/v2/internal/codex/middleware"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/codex/transport"
+	grokmw "github.com/hasoftware/claude-credentials-manager/v2/internal/grok/middleware"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/httpx"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/oauth"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/share/alias"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/share/middleware"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/trace"
 )
 
 // LocalProxy is a passthrough reverse proxy that runs on a random

@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/httpx"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/httpx"
 )
 
 // passthroughUsage is the parsed shape of the /ccm-share/usage

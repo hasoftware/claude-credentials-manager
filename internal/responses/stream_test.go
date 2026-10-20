@@ -18,7 +18,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/responses"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/responses"
 )
 
 // TestStreamTranslator_Pipe_Fixtures drives every *.codex.txt file in

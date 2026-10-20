@@ -6,8 +6,8 @@ import (
 	"io"
 	"os"
 
-	grokoauth "github.com/hbinhng/claude-credentials-manager/internal/grok/oauth"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	grokoauth "github.com/hasoftware/claude-credentials-manager/v2/internal/grok/oauth"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 	"github.com/spf13/cobra"
 )
 

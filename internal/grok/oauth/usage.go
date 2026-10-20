@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	grokmw "github.com/hbinhng/claude-credentials-manager/internal/grok/middleware"
-	"github.com/hbinhng/claude-credentials-manager/internal/oauth"
+	grokmw "github.com/hasoftware/claude-credentials-manager/v2/internal/grok/middleware"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/oauth"
 )
 
 // BillingURL is cli-chat-proxy's weekly-quota endpoint. The ?format=credits

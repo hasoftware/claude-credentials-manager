@@ -24,7 +24,7 @@ VERSION    := $(shell sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' npm/package.js
 COMMIT     := $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
 BUILD_DATE := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 
-VERSION_PKG := github.com/hbinhng/claude-credentials-manager/cmd
+VERSION_PKG := github.com/hasoftware/claude-credentials-manager/v2/cmd
 LDFLAGS := -s -w \
   -X $(VERSION_PKG).Version=$(VERSION) \
   -X $(VERSION_PKG).Commit=$(COMMIT) \

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/oauth"
-	"github.com/hbinhng/claude-credentials-manager/internal/usage"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/oauth"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/usage"
 )
 
 // Sticky-mode tunables (none configurable in v1):

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/responses"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/responses"
 )
 
 // grokSSE builds a grok-shell-shaped Responses stream from data payloads.

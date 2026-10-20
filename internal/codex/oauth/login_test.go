@@ -15,9 +15,9 @@ import (
 	"testing"
 	"time"
 
-	codexoauth "github.com/hbinhng/claude-credentials-manager/internal/codex/oauth"
-	oauth_pkg "github.com/hbinhng/claude-credentials-manager/internal/oauth"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	codexoauth "github.com/hasoftware/claude-credentials-manager/v2/internal/codex/oauth"
+	oauth_pkg "github.com/hasoftware/claude-credentials-manager/v2/internal/oauth"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 // mkLoginJWT builds a minimal JWT accepted by the codex JWT parser.

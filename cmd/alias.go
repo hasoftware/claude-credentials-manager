@@ -10,7 +10,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/shellalias"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/shellalias"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )

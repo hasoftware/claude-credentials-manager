@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/oauth"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/oauth"
 )
 
 // stickyProxy wires a serving-mode Proxy with a sticky two-cred pool in

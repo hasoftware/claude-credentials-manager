@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/oauth"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/oauth"
 )
 
 // UsageURL is OpenAI/ChatGPT's codex quota endpoint. Tests override.

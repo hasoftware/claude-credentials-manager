@@ -14,8 +14,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
-	"github.com/hbinhng/claude-credentials-manager/internal/trace"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/trace"
 )
 
 // grokCred builds a minimal grok credential with a live (non-expired)

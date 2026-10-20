@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/responses"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/responses"
 )
 
 // helper: feed SSE lines through ClassifyStream and assert replay+remaining round-trip.

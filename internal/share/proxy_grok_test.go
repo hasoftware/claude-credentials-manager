@@ -3,8 +3,8 @@ package share
 import (
 	"testing"
 
-	grokmw "github.com/hbinhng/claude-credentials-manager/internal/grok/middleware"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	grokmw "github.com/hasoftware/claude-credentials-manager/v2/internal/grok/middleware"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 // TestSetGrokHandlersWiresProvider verifies SetGrokHandlers marks the

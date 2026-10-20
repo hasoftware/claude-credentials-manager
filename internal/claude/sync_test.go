@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 // makeCodexCredForSync builds and saves a codex credential for Sync guard tests.

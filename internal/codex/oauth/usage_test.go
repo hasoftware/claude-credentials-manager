@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	codexoauth "github.com/hbinhng/claude-credentials-manager/internal/codex/oauth"
+	codexoauth "github.com/hasoftware/claude-credentials-manager/v2/internal/codex/oauth"
 )
 
 func setUsageURL(t *testing.T, h http.HandlerFunc) {

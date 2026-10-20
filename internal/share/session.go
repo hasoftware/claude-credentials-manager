@@ -13,11 +13,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/codex/transport"
-	"github.com/hbinhng/claude-credentials-manager/internal/httpx"
-	"github.com/hbinhng/claude-credentials-manager/internal/share/alias"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
-	"github.com/hbinhng/claude-credentials-manager/internal/trace"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/codex/transport"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/httpx"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/share/alias"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/trace"
 )
 
 // ErrInvalidPinnedToken is returned (wrapped) by StartSession and

@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 // refreshExpiryMargin is how far before ExpiresAt a per-credential

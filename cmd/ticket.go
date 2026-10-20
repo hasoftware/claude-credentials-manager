@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/share"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/share"
 	"github.com/spf13/cobra"
 )
 

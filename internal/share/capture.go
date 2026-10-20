@@ -8,7 +8,7 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/claude"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/claude"
 )
 
 // DefaultCapturePrompt is the user-supplied prompt passed to `claude -p`

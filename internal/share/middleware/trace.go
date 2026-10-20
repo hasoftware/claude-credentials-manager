@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/share/pipeline"
-	"github.com/hbinhng/claude-credentials-manager/internal/trace"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/share/pipeline"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/trace"
 )
 
 // NewTrace returns a pipeline.Step that emits trace events for every

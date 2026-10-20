@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/share/pipeline"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/share/pipeline"
 )
 
 type recordStep struct {

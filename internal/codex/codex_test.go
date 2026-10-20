@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/codex"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/codex"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 func setupFakeHome(t *testing.T) string {

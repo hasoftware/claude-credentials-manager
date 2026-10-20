@@ -18,8 +18,8 @@ import (
 
 	"github.com/andybalholm/brotli"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/share/alias"
-	sharemw "github.com/hbinhng/claude-credentials-manager/internal/share/middleware"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/share/alias"
+	sharemw "github.com/hasoftware/claude-credentials-manager/v2/internal/share/middleware"
 )
 
 // fakeBearer is a stub sharemw.BearerSource.

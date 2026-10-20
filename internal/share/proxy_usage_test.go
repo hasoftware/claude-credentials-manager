@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/usage"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/usage"
 )
 
 const validSID = "5f2c8c4e-1234-4567-8abc-0123456789ab"

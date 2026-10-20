@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/oauth"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/oauth"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 // errNoActivated is returned by credPool.Fresh when the pool has no

@@ -14,12 +14,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/codex/identity"
-	codexmw "github.com/hbinhng/claude-credentials-manager/internal/codex/middleware"
-	"github.com/hbinhng/claude-credentials-manager/internal/codex/transport"
-	"github.com/hbinhng/claude-credentials-manager/internal/share/alias"
-	sharemw "github.com/hbinhng/claude-credentials-manager/internal/share/middleware"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/codex/identity"
+	codexmw "github.com/hasoftware/claude-credentials-manager/v2/internal/codex/middleware"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/codex/transport"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/share/alias"
+	sharemw "github.com/hasoftware/claude-credentials-manager/v2/internal/share/middleware"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 // minimalCred builds a codex credential with the given access token.

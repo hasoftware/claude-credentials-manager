@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/httpx"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/httpx"
 )
 
 type TokenResponse struct {

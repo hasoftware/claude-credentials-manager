@@ -28,9 +28,9 @@ import (
 
 	"github.com/andybalholm/brotli"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/responses"
-	sharemw "github.com/hbinhng/claude-credentials-manager/internal/share/middleware"
-	"github.com/hbinhng/claude-credentials-manager/internal/trace"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/responses"
+	sharemw "github.com/hasoftware/claude-credentials-manager/v2/internal/share/middleware"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/trace"
 )
 
 const (

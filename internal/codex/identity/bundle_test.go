@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/codex/identity"
-	"github.com/hbinhng/claude-credentials-manager/internal/store"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/codex/identity"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
 func newReq(t *testing.T) *http.Request {

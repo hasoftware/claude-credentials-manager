@@ -1,4 +1,4 @@
-module github.com/hbinhng/claude-credentials-manager
+module github.com/hasoftware/claude-credentials-manager/v2
 
 go 1.24.1
 

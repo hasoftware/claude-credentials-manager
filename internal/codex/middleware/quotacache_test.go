@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	codexmw "github.com/hbinhng/claude-credentials-manager/internal/codex/middleware"
+	codexmw "github.com/hasoftware/claude-credentials-manager/v2/internal/codex/middleware"
 )
 
 // fakeUsageCache records calls to Update.

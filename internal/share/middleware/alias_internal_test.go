@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/share/alias"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/share/alias"
 )
 
 // TestRewriteModelField_Fallbacks exercises the defensive return paths in

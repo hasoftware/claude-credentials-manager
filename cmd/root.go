@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/claude"
-	"github.com/hbinhng/claude-credentials-manager/internal/clog"
-	"github.com/hbinhng/claude-credentials-manager/internal/httpx"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/claude"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/clog"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/httpx"
 	"github.com/spf13/cobra"
 )
 

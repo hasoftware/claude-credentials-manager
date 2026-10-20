@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/usage"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/usage"
 )
 
 // installUsageTee wraps r.Body with a usage.TeeBody when conditions

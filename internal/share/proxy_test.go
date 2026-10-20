@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/oauth"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/oauth"
 )
 
 // TestListenerBindAddr encodes the --bind-host / --bind-port flag rules

@@ -13,7 +13,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/oauth"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/oauth"
 )
 
 // formatLifetime renders a time-to-exhaustion in operator-friendly

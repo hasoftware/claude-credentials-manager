@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/usage"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/usage"
 	"github.com/spf13/cobra"
 )
 

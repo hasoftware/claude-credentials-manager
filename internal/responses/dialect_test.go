@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/responses"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/responses"
 )
 
 // translateMap runs TranslateRequest and decodes the result for assertions.

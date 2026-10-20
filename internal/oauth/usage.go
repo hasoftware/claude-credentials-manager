@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/hbinhng/claude-credentials-manager/internal/httpx"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/httpx"
 )
 
 // UsageURL can be overridden in tests.
