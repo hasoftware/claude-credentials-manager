@@ -1,6 +1,6 @@
 {
   "name": "@hasoftware/ccm",
-  "version": "1.24.0",
+  "version": "2.0.0",
   "description": "Claude Credentials Manager — manage multiple Claude OAuth sessions for Claude Code",
   "bin": {
     "ccm": "bin/ccm"
@@ -19,11 +19,11 @@
   "homepage": "https://github.com/hasoftware/claude-credentials-manager",
   "license": "MIT",
   "optionalDependencies": {
-    "@hasoftware/ccm.darwin-x64": "1.24.0",
-    "@hasoftware/ccm.darwin-arm64": "1.24.0",
-    "@hasoftware/ccm.linux-x64": "1.24.0",
-    "@hasoftware/ccm.linux-arm64": "1.24.0",
-    "@hasoftware/ccm.win32-x64": "1.24.0",
-    "@hasoftware/ccm.win32-arm64": "1.24.0"
+    "@hasoftware/ccm.darwin-x64": "2.0.0",
+    "@hasoftware/ccm.darwin-arm64": "2.0.0",
+    "@hasoftware/ccm.linux-x64": "2.0.0",
+    "@hasoftware/ccm.linux-arm64": "2.0.0",
+    "@hasoftware/ccm.win32-x64": "2.0.0",
+    "@hasoftware/ccm.win32-arm64": "2.0.0"
   }
 }
