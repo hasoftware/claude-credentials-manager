@@ -7,10 +7,8 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"sync/atomic"
-	"syscall"
 	"testing"
 	"time"
 
@@ -25,6 +23,7 @@ func setupFakeHome(t *testing.T) string {
 	t.Helper()
 	home := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	if err := os.MkdirAll(filepath.Join(home, ".ccm"), 0700); err != nil {
 		t.Fatalf("mkdir ~/.ccm: %v", err)
 	}
@@ -172,14 +171,10 @@ func TestCredStateRefreshOnExpiry(t *testing.T) {
 }
 
 // TestCredStateFlockExclusive verifies that Fresh() blocks while a
-// peer holds flock(LOCK_EX) on the credential's lock file, and
-// completes once the peer releases. flock(2) is per open-file-
-// description on both Linux and macOS, so two fds in the same
-// process serialize correctly.
+// peer holds the exclusive lock on the credential's lock file
+// (flock on Unix, LockFileEx on Windows — see peerLock), and
+// completes once the peer releases.
 func TestCredStateFlockExclusive(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("flock not used on Windows")
-	}
 	setupFakeHome(t)
 	cred := makeCred(t, "44444444-4444-4444-4444-444444444444", "access-old")
 	cred.ClaudeAiOauth.ExpiresAt = time.Now().Add(-1 * time.Second).UnixMilli()
@@ -190,20 +185,18 @@ func TestCredStateFlockExclusive(t *testing.T) {
 	srv, _ := stubTokenServer(t, "access-new", "refresh-new", 3600)
 	withTokenURL(t, srv.URL)
 
-	// Hold an exclusive flock on the lock file from a separate fd.
+	// Hold the exclusive lock on the lock file from a separate fd.
 	lockPath := filepath.Join(store.Dir(), cred.ID+".credentials.json.lock")
 	peerFd, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0600)
 	if err != nil {
 		t.Fatalf("peer open lock: %v", err)
 	}
-	if err := syscall.Flock(int(peerFd.Fd()), syscall.LOCK_EX); err != nil {
-		t.Fatalf("peer flock LOCK_EX: %v", err)
-	}
+	peerLock(t, peerFd)
 
 	// Release the peer lock 200ms from now.
 	release := make(chan struct{})
 	time.AfterFunc(200*time.Millisecond, func() {
-		_ = syscall.Flock(int(peerFd.Fd()), syscall.LOCK_UN)
+		peerUnlock(peerFd)
 		_ = peerFd.Close()
 		close(release)
 	})
@@ -232,9 +225,6 @@ func TestCredStateFlockExclusive(t *testing.T) {
 // peer's rotation via the post-lock reload and skip our own OAuth
 // call.
 func TestCredStateDoubleCheckSkipsRedundantRefresh(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("flock not used on Windows")
-	}
 	setupFakeHome(t)
 	cred := makeCred(t, "55555555-5555-5555-5555-555555555555", "access-old")
 	cred.ClaudeAiOauth.ExpiresAt = time.Now().Add(-1 * time.Second).UnixMilli()
@@ -251,9 +241,7 @@ func TestCredStateDoubleCheckSkipsRedundantRefresh(t *testing.T) {
 	if err != nil {
 		t.Fatalf("peer open lock: %v", err)
 	}
-	if err := syscall.Flock(int(peerFd.Fd()), syscall.LOCK_EX); err != nil {
-		t.Fatalf("peer flock LOCK_EX: %v", err)
-	}
+	peerLock(t, peerFd)
 
 	// Simulate the peer finishing its refresh while we hold the lock:
 	// write a fresh, non-expiring credential to disk, bump mtime, then
@@ -266,7 +254,7 @@ func TestCredStateDoubleCheckSkipsRedundantRefresh(t *testing.T) {
 		_ = store.Save(&fresh)
 		future := time.Now().Add(1 * time.Second)
 		_ = os.Chtimes(store.CredPath(cred.ID), future, future)
-		_ = syscall.Flock(int(peerFd.Fd()), syscall.LOCK_UN)
+		peerUnlock(peerFd)
 		_ = peerFd.Close()
 	})
 
@@ -460,6 +448,7 @@ func TestCredState_Claude_FreshUnchanged(t *testing.T) {
 func TestCredStateUpstreamURL(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	t.Setenv("CCM_HOME", tmp)
 	_ = os.MkdirAll(filepath.Join(tmp, ".ccm"), 0o700)
 

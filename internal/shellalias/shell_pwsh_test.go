@@ -1,6 +1,8 @@
 package shellalias
 
 import (
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -44,7 +46,7 @@ func TestPwsh_Quote_MethodReceiver(t *testing.T) {
 
 func TestPwsh_AliasFile_RespectsCCMHome(t *testing.T) {
 	t.Setenv("CCM_HOME", "/fake/ccm")
-	want := "/fake/ccm/aliases.ps1"
+	want := filepath.Join("/fake/ccm", "aliases.ps1")
 	if got := newPwsh().AliasFile(); got != want {
 		t.Fatalf("got %q want %q", got, want)
 	}
@@ -53,6 +55,9 @@ func TestPwsh_AliasFile_RespectsCCMHome(t *testing.T) {
 func TestPwsh_RcFiles_DefaultResolverErrors(t *testing.T) {
 	// Exercises the package-default pwshResolver, which is intentionally
 	// an error until detect_windows.go wires the real Windows resolver.
+	if runtime.GOOS == "windows" {
+		t.Skip("detect_windows.go replaces the default resolver")
+	}
 	orig := pwshResolver
 	t.Cleanup(func() { pwshResolver = orig })
 	// Don't replace — call through to the existing default.

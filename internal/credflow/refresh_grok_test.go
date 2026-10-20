@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -25,7 +26,9 @@ func TestRefreshGrokLocked_RotatesAndPersists(t *testing.T) {
 	c.SetTokens("old-acc", "old-refresh", time.Now().Add(-time.Minute).UnixMilli())
 
 	// refreshGrokLocked calls store.Save; point HOME at a temp dir.
-	t.Setenv("HOME", t.TempDir())
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	t.Setenv("USERPROFILE", t.TempDir())
 
 	out, err := refreshGrokLocked(c)
@@ -208,6 +211,9 @@ func TestRefreshCredential_Grok_EmptyRefreshTokenKeepsOld(t *testing.T) {
 }
 
 func TestRefreshCredential_Grok_SaveError(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("directory permissions do not block writes on Windows")
+	}
 	setupFakeHome(t, "abc")
 	cred := &store.Credential{
 		ID:         "abc",

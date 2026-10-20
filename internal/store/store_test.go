@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -331,7 +332,7 @@ func TestFilePermissions(t *testing.T) {
 		t.Fatalf("stat credential file: %v", err)
 	}
 	perm := info.Mode().Perm()
-	if perm != 0600 {
+	if runtime.GOOS != "windows" && perm != 0600 { // Windows has no Unix mode bits
 		t.Errorf("file permission = %04o, want 0600", perm)
 	}
 }

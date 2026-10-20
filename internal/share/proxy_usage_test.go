@@ -20,6 +20,7 @@ const validSID = "5f2c8c4e-1234-4567-8abc-0123456789ab"
 func TestProxy_RecordsUsageInSingleCredMode(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")
@@ -83,6 +84,7 @@ func TestProxy_RecordsUsageInSingleCredMode(t *testing.T) {
 func TestProxy_SkipsUsageWhenSessionIDMissing(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")
@@ -126,6 +128,7 @@ func TestProxy_SkipsUsageWhenSessionIDMissing(t *testing.T) {
 func TestProxy_SkipsUsageWhenContentEncodingSet(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Content-Encoding", "gzip")
@@ -163,6 +166,7 @@ func TestProxy_SkipsUsageWhenContentEncodingSet(t *testing.T) {
 func TestProxy_SkipsUsageOnNonMessagesPath(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)
@@ -201,6 +205,7 @@ func TestProxy_SkipsUsageOnNonMessagesPath(t *testing.T) {
 func TestProxy_SkipsUsageWhenSessionIDInvalid(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.WriteHeader(200)

@@ -114,6 +114,7 @@ func seedFakeHome(t *testing.T) {
 	t.Helper()
 	home := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	if err := os.MkdirAll(filepath.Join(home, ".ccm"), 0700); err != nil {
 		t.Fatalf("mkdir .ccm: %v", err)
 	}

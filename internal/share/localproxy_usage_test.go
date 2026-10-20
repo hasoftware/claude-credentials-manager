@@ -26,6 +26,7 @@ import (
 func TestLocalProxy_RecordsUsageInSingleCredMode(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")
@@ -90,6 +91,7 @@ func TestLocalProxy_RecordsUsageInSingleCredMode(t *testing.T) {
 func TestLocalProxy_RecordsGzippedSSE(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 
 	stream := "event: message_start\n" +
 		`data: {"type":"message_start","message":{"model":"claude-opus-4-7-20251217","usage":{"input_tokens":33,"output_tokens":1}}}` + "\n\n" +
@@ -157,6 +159,7 @@ func TestLocalProxy_RecordsGzippedSSE(t *testing.T) {
 func TestLocalProxy_RecordsGzippedJSON(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 
 	body := `{"model":"claude-haiku-4-5-20240920","usage":{"input_tokens":5,"output_tokens":17}}`
 	var compressed bytes.Buffer
@@ -222,6 +225,7 @@ func TestLocalProxy_RecordsGzippedJSON(t *testing.T) {
 func TestLocalProxy_RecordsUsageInPoolMode(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")

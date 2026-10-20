@@ -18,6 +18,7 @@ func setHomeForLockTest(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
 	t.Setenv("HOME", dir)
+	t.Setenv("USERPROFILE", dir)
 	if err := os.MkdirAll(filepath.Join(dir, ".ccm"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -118,6 +119,7 @@ func TestWithCredentialLock_EnsureDirError(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Setenv("HOME", dir)
+	t.Setenv("USERPROFILE", dir)
 
 	err := store.WithCredentialLock("abc", func() error { return nil })
 	if err == nil {
@@ -134,6 +136,7 @@ func TestWithCredentialLock_OpenFileError(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Setenv("HOME", dir)
+	t.Setenv("USERPROFILE", dir)
 
 	// Make the .ccm directory read-only so OpenFile for the lock fails.
 	if err := os.Chmod(ccmDir, 0o500); err != nil {

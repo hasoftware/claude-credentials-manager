@@ -3,12 +3,14 @@ package usage
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
 func TestDir_UsesHome(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	got := Dir()
 	want := filepath.Join(tmp, ".ccm", "usage")
 	if got != want {
@@ -19,6 +21,7 @@ func TestDir_UsesHome(t *testing.T) {
 func TestEnsureDir_CreatesWith0700(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	if err := EnsureDir(); err != nil {
 		t.Fatalf("EnsureDir: %v", err)
 	}
@@ -29,7 +32,7 @@ func TestEnsureDir_CreatesWith0700(t *testing.T) {
 	if !st.IsDir() {
 		t.Fatalf("not a dir")
 	}
-	if mode := st.Mode().Perm(); mode != 0700 {
+	if mode := st.Mode().Perm(); runtime.GOOS != "windows" && mode != 0700 { // Windows has no Unix mode bits
 		t.Fatalf("mode = %o, want 0700", mode)
 	}
 }
@@ -37,6 +40,7 @@ func TestEnsureDir_CreatesWith0700(t *testing.T) {
 func TestSessionPath_JoinsCorrectly(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	got := SessionPath("abc-123")
 	want := filepath.Join(tmp, ".ccm", "usage", "abc-123.ndjson")
 	if got != want {
@@ -47,6 +51,7 @@ func TestSessionPath_JoinsCorrectly(t *testing.T) {
 func TestDir_RespectsCCMHome(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	custom := filepath.Join(t.TempDir(), "custom-ccm")
 	t.Setenv("CCM_HOME", custom)
 	got := Dir()

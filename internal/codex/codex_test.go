@@ -19,6 +19,7 @@ func setupFakeHome(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
 	t.Setenv("HOME", dir)
+	t.Setenv("USERPROFILE", dir)
 	for _, sub := range []string{".ccm", ".codex"} {
 		if err := os.MkdirAll(filepath.Join(dir, sub), 0o755); err != nil { t.Fatal(err) }
 	}

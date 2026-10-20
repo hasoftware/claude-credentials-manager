@@ -58,3 +58,5 @@ internal/
 ## Test Patterns
 
 Tests override `HOME`/`USERPROFILE` env vars to use `t.TempDir()` as a fake home directory. The `setupFakeHome` helper creates both `~/.claude/` and `~/.ccm/` directories. OAuth tests use `httptest` servers.
+
+Always set **both** `HOME` and `USERPROFILE` to the same directory: `os.UserHomeDir()` reads `USERPROFILE` on Windows, so a test that sets only `HOME` writes into the developer's real `~/.ccm` there. Unix-only mechanisms (directory `chmod` to force write errors, file mode assertions, `flock`) need a Windows skip/guard or a `//go:build !windows` file.

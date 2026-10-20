@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -68,6 +69,9 @@ func TestLoginGrok_ShortIDPath(t *testing.T) {
 }
 
 func TestLoginGrok_SaveError_Propagates(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("directory permissions do not block writes on Windows")
+	}
 	home := setupFakeHome(t)
 	// Make .ccm read-only so Save fails.
 	ccmDir := filepath.Join(home, ".ccm")

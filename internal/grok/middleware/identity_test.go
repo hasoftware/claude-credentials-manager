@@ -20,13 +20,16 @@ func TestReadGrokVersion_FromFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	if got := readGrokVersion(); got != "9.9.9" {
 		t.Fatalf("readGrokVersion = %q, want 9.9.9", got)
 	}
 }
 
 func TestReadGrokVersion_FallbackWhenAbsent(t *testing.T) {
-	t.Setenv("HOME", t.TempDir()) // no .grok
+	home := t.TempDir() // no .grok
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	if got := readGrokVersion(); got != defaultGrokClientVersion {
 		t.Fatalf("readGrokVersion = %q, want default %q", got, defaultGrokClientVersion)
 	}
@@ -37,6 +40,7 @@ func TestReadGrokVersion_FallbackOnBadJSON(t *testing.T) {
 	_ = os.MkdirAll(filepath.Join(home, ".grok"), 0o755)
 	_ = os.WriteFile(filepath.Join(home, ".grok", "version.json"), []byte(`not json`), 0o644)
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	if got := readGrokVersion(); got != defaultGrokClientVersion {
 		t.Fatalf("bad json → want default, got %q", got)
 	}
@@ -47,6 +51,7 @@ func TestReadGrokVersion_FallbackToStableVersion(t *testing.T) {
 	_ = os.MkdirAll(filepath.Join(home, ".grok"), 0o755)
 	_ = os.WriteFile(filepath.Join(home, ".grok", "version.json"), []byte(`{"stable_version":"3.2.1"}`), 0o644)
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	if got := readGrokVersion(); got != "3.2.1" {
 		t.Fatalf("want stable_version 3.2.1, got %q", got)
 	}
@@ -57,6 +62,7 @@ func TestReadGrokVersion_StaleLocalInstallClampedToFloor(t *testing.T) {
 	_ = os.MkdirAll(filepath.Join(home, ".grok"), 0o755)
 	_ = os.WriteFile(filepath.Join(home, ".grok", "version.json"), []byte(`{"version":"0.2.101"}`), 0o644)
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	if got := readGrokVersion(); got != defaultGrokClientVersion {
 		t.Fatalf("stale local 0.2.101 → want floor %q, got %q", defaultGrokClientVersion, got)
 	}
@@ -67,6 +73,7 @@ func TestReadGrokVersion_NewerLocalInstallWins(t *testing.T) {
 	_ = os.MkdirAll(filepath.Join(home, ".grok"), 0o755)
 	_ = os.WriteFile(filepath.Join(home, ".grok", "version.json"), []byte(`{"version":"1.2.0"}`), 0o644)
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	if got := readGrokVersion(); got != "1.2.0" {
 		t.Fatalf("newer local install → want 1.2.0, got %q", got)
 	}
@@ -77,6 +84,7 @@ func TestReadGrokVersion_JustBelowFloorClamped(t *testing.T) {
 	_ = os.MkdirAll(filepath.Join(home, ".grok"), 0o755)
 	_ = os.WriteFile(filepath.Join(home, ".grok", "version.json"), []byte(`{"version":"1.0.45"}`), 0o644)
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	if got := readGrokVersion(); got != "1.0.46" {
 		t.Fatalf("local 1.0.45 → want floor 1.0.46, got %q", got)
 	}
@@ -87,6 +95,7 @@ func TestReadGrokVersion_UnparseableLocalFallsBackToFloor(t *testing.T) {
 	_ = os.MkdirAll(filepath.Join(home, ".grok"), 0o755)
 	_ = os.WriteFile(filepath.Join(home, ".grok", "version.json"), []byte(`{"version":"nightly"}`), 0o644)
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	if got := readGrokVersion(); got != defaultGrokClientVersion {
 		t.Fatalf("unparseable local → want floor %q, got %q", defaultGrokClientVersion, got)
 	}
@@ -237,6 +246,7 @@ func TestReadGrokVersion_EmptyVersionFieldsFallBackToFloor(t *testing.T) {
 	_ = os.MkdirAll(filepath.Join(home, ".grok"), 0o755)
 	_ = os.WriteFile(filepath.Join(home, ".grok", "version.json"), []byte(`{}`), 0o644)
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	if got := readGrokVersion(); got != defaultGrokClientVersion {
 		t.Fatalf("empty version.json → want floor %q, got %q", defaultGrokClientVersion, got)
 	}

@@ -7,7 +7,9 @@ import (
 )
 
 func TestManagedCloudflaredPath_RespectsCCMHome(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	custom := filepath.Join(t.TempDir(), "custom-ccm")
 	t.Setenv("CCM_HOME", custom)
 

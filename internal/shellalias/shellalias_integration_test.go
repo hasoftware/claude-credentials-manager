@@ -49,6 +49,7 @@ func runPOSIXIntegration(t *testing.T, shellBin string) {
 	home := t.TempDir()
 	t.Setenv("CCM_HOME", home)
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 
 	fakeCcm := buildFakeCcm(t)
 
@@ -88,6 +89,7 @@ func TestIntegration_Fish(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("CCM_HOME", home)
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
 
 	fakeCcm := buildFakeCcm(t)
@@ -126,6 +128,7 @@ func TestIntegration_DoubleDashPreserved(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("CCM_HOME", home)
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	fakeCcm := buildFakeCcm(t)
 	sh := newBash()
 	if errs := Install("cld",

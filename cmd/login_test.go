@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -273,6 +274,9 @@ func TestLoginCodex_ShortIDPath(t *testing.T) {
 }
 
 func TestLoginCodex_SaveError_Propagates(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("directory permissions do not block writes on Windows")
+	}
 	setupLoginFakeHome(t)
 	// Make .ccm read-only so Save fails.
 	home := os.Getenv("HOME")

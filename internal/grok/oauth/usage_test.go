@@ -19,7 +19,9 @@ const billingBody = `{"config":{
 const settingsBody = `{"subscription_tier_display":"SuperGrok Heavy","min_client_version":"0.1.202"}`
 
 func TestFetchUsage_WeeklyQuotaAndTier(t *testing.T) {
-	t.Setenv("HOME", t.TempDir()) // no ~/.grok → default UA version
+	home := t.TempDir() // no ~/.grok → default UA version
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	var gotBillingAuth, gotBillingUA, gotIdent string
 	billing := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotBillingAuth = r.Header.Get("Authorization")
@@ -76,7 +78,9 @@ func TestFetchUsage_MissingToken(t *testing.T) {
 }
 
 func TestFetchUsage_BillingNon200(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	billing := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
 	}))
@@ -95,7 +99,9 @@ func TestFetchUsage_BillingNon200(t *testing.T) {
 }
 
 func TestFetchUsage_BillingBadJSON(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	billing := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("not json"))
 	}))
@@ -111,7 +117,9 @@ func TestFetchUsage_BillingBadJSON(t *testing.T) {
 
 func TestFetchUsage_TierBestEffort(t *testing.T) {
 	// Billing OK but settings fails → quota still returned, Tier empty.
-	t.Setenv("HOME", t.TempDir())
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	billing := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(billingBody))
 	}))
@@ -138,7 +146,9 @@ func TestFetchUsage_TierBestEffort(t *testing.T) {
 
 func TestFetchUsage_TransportError(t *testing.T) {
 	// Point billing at a closed server → transport error.
-	t.Setenv("HOME", t.TempDir())
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 	url := srv.URL
 	srv.Close()
@@ -153,7 +163,9 @@ func TestFetchUsage_TransportError(t *testing.T) {
 
 func TestFetchUsage_ResetsFallbackToBillingPeriodEnd(t *testing.T) {
 	// currentPeriod.end absent → fall back to config.billingPeriodEnd.
-	t.Setenv("HOME", t.TempDir())
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	const body = `{"config":{"currentPeriod":{"type":"USAGE_PERIOD_TYPE_WEEKLY"},"creditUsagePercent":10,"billingPeriodEnd":"2026-08-01T00:00:00+00:00"}}`
 	billing := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(body))
@@ -175,7 +187,9 @@ func TestFetchUsage_ResetsFallbackToBillingPeriodEnd(t *testing.T) {
 
 func TestFetchTier_BadSettingsJSON(t *testing.T) {
 	// Settings returns 200 but unparseable → Tier empty, quota still returned.
-	t.Setenv("HOME", t.TempDir())
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	billing := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(billingBody))
 	}))

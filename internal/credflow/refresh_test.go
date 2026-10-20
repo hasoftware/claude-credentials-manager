@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -20,6 +21,7 @@ func setupFakeHome(t *testing.T, credID string) string {
 	t.Helper()
 	home := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 
 	if err := os.MkdirAll(filepath.Join(home, ".ccm"), 0700); err != nil {
 		t.Fatalf("mkdir .ccm: %v", err)
@@ -172,6 +174,7 @@ func TestRefreshCredential_EmptyTierKeepsOld(t *testing.T) {
 func TestRefreshCredential_UnknownID(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
 	defer stubSeams(
 		func(string) (*oauth.TokenResponse, error) {
 			t.Fatalf("refresh called; should have failed to load first")
@@ -214,6 +217,9 @@ func TestRefreshCredential_OtherOauthError(t *testing.T) {
 }
 
 func TestRefreshCredential_SaveError(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("directory permissions do not block writes on Windows")
+	}
 	id := setupFakeHome(t, "save-0000-0000-0000-0000-000000000006")
 	ccmDir := filepath.Join(os.Getenv("HOME"), ".ccm")
 	// Pre-create the lock file so WithCredentialLock can open it even
@@ -430,6 +436,9 @@ func TestRefreshCredential_UnknownProvider_Errors(t *testing.T) {
 }
 
 func TestRefreshCredential_Codex_SaveError(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("directory permissions do not block writes on Windows")
+	}
 	setupFakeHome(t, "abc")
 	cred := &store.Credential{
 		ID:       "abc",

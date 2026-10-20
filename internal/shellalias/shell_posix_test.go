@@ -2,6 +2,7 @@ package shellalias
 
 import (
 	"errors"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -69,7 +70,7 @@ func TestPOSIX_Quote_MethodReceiver(t *testing.T) {
 
 func TestPOSIX_AliasFile_RespectsCCMHome(t *testing.T) {
 	t.Setenv("CCM_HOME", "/fake/ccm")
-	if got := newBash().AliasFile(); got != "/fake/ccm/aliases.sh" {
+	if got := newBash().AliasFile(); got != filepath.Join("/fake/ccm", "aliases.sh") {
 		t.Fatalf("got %q", got)
 	}
 }

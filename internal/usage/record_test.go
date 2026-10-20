@@ -40,6 +40,7 @@ func TestRecord_RoundTrip(t *testing.T) {
 func TestAppend_CreatesFile(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	sid := "5f2c8c4e-1234-4567-8abc-0123456789ab"
 	rec := Record{TS: time.Now().UTC(), Model: "x", In: 1, Out: 2, CR: 3, CW: 4, Stream: true}
 	if err := Append(sid, rec); err != nil {
@@ -50,7 +51,7 @@ func TestAppend_CreatesFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("stat: %v", err)
 	}
-	if mode := st.Mode().Perm(); mode != 0600 {
+	if mode := st.Mode().Perm(); runtime.GOOS != "windows" && mode != 0600 { // Windows has no Unix mode bits
 		t.Fatalf("file mode = %o, want 0600", mode)
 	}
 }
@@ -58,6 +59,7 @@ func TestAppend_CreatesFile(t *testing.T) {
 func TestAppend_AppendsNewline(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	sid := "5f2c8c4e-1234-4567-8abc-0123456789ab"
 	for i := 0; i < 3; i++ {
 		rec := Record{TS: time.Now().UTC(), Model: "x", Out: int64(i + 1)}
@@ -83,6 +85,7 @@ func TestAppend_AppendsNewline(t *testing.T) {
 func TestLoadFile_SkipsCorruptLines(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	sid := "5f2c8c4e-1234-4567-8abc-0123456789ab"
 	if err := EnsureDir(); err != nil {
 		t.Fatal(err)
@@ -125,6 +128,7 @@ func TestLoadFile_NotFoundIsError(t *testing.T) {
 func TestLoadFile_SkipsBlankLines(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	if err := EnsureDir(); err != nil {
 		t.Fatal(err)
 	}
@@ -149,6 +153,7 @@ func TestLoadFile_SkipsBlankLines(t *testing.T) {
 func TestLoadFile_ScannerErrorReturned(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	if err := EnsureDir(); err != nil {
 		t.Fatal(err)
 	}
@@ -179,6 +184,7 @@ func TestAppend_EnsureDirErrorReturnsError(t *testing.T) {
 	// Make HOME a path where .ccm is unbuildable: create a regular
 	// file at HOME/.ccm so MkdirAll can't promote it to a dir.
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	if err := os.WriteFile(filepath.Join(tmp, ".ccm"), []byte("blocker"), 0600); err != nil {
 		t.Fatal(err)
 	}
@@ -197,6 +203,7 @@ func TestAppend_OpenErrorReturnsError(t *testing.T) {
 	}
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	sid := "5f2c8c4e-1234-4567-8abc-0123456789ab"
 	// Create the usage dir, then create a subdir at the session-id
 	// path so OpenFile sees a directory instead of a regular file.
@@ -222,6 +229,7 @@ func TestAppend_ConcurrentAppendersWholeRecordAtomicity(t *testing.T) {
 	}
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	sid := "5f2c8c4e-1234-4567-8abc-0123456789ab"
 	const goroutines, perG = 8, 50
 	var wg sync.WaitGroup

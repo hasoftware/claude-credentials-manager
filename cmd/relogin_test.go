@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -273,6 +274,9 @@ func TestRelogin_NilContext(t *testing.T) {
 }
 
 func TestRelogin_SaveError_Propagates(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("directory permissions do not block writes on Windows")
+	}
 	if os.Geteuid() == 0 {
 		t.Skip("root bypasses directory write permissions")
 	}

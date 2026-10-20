@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -55,7 +56,7 @@ func TestInstall_WritesAliasFileAndRc(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !strings.Contains(string(rc), "# ccm-aliases:begin") ||
-		!strings.Contains(string(rc), fs.aliasPath) {
+		!strings.Contains(string(rc), strconv.Quote(fs.aliasPath)) {
 		t.Fatalf("rc: %s", rc)
 	}
 }
@@ -341,14 +342,12 @@ func TestInstall_RcWriteError(t *testing.T) {
 }
 
 func TestList_ReadError(t *testing.T) {
-	if os.Getuid() == 0 {
-		t.Skip("root bypasses file permissions")
-	}
 	home := t.TempDir()
 	t.Setenv("CCM_HOME", home)
-	// Create aliases.sh as unreadable so List returns an error.
+	// Make aliases.sh a directory so reading it fails on every OS,
+	// including as root (which bypasses a 0o000 file mode).
 	aliasPath := filepath.Join(home, "aliases.sh")
-	if err := os.WriteFile(aliasPath, []byte(""), 0o000); err != nil {
+	if err := os.Mkdir(aliasPath, 0o700); err != nil {
 		t.Fatal(err)
 	}
 	_, err := List()
@@ -358,13 +357,10 @@ func TestList_ReadError(t *testing.T) {
 }
 
 func TestRemove_ReadError(t *testing.T) {
-	if os.Getuid() == 0 {
-		t.Skip("root bypasses file permissions")
-	}
 	home := t.TempDir()
 	t.Setenv("CCM_HOME", home)
-	aliasPath := filepath.Join(home, "aliases.sh")
-	if err := os.WriteFile(aliasPath, []byte(""), 0o000); err != nil {
+	aliasPath := filepath.Join(home, "aliases.sh") // a directory: unreadable on every OS
+	if err := os.Mkdir(aliasPath, 0o700); err != nil {
 		t.Fatal(err)
 	}
 	err := Remove("cld")

@@ -46,7 +46,7 @@ func TestFish_Quote_MethodReceiver(t *testing.T) {
 
 func TestFish_AliasFile_RespectsCCMHome(t *testing.T) {
 	t.Setenv("CCM_HOME", "/fake/ccm")
-	if got := newFish().AliasFile(); got != "/fake/ccm/aliases.fish" {
+	if got := newFish().AliasFile(); got != filepath.Join("/fake/ccm", "aliases.fish") {
 		t.Fatalf("got %q", got)
 	}
 }

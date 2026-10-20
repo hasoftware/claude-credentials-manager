@@ -30,6 +30,7 @@ func dayAt(year int, month time.Month, day int) time.Time {
 func TestAggregate_Totals(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	writeRecords(t, "5f2c8c4e-1234-4567-8abc-0000000000a1", []Record{
 		{TS: dayAt(2026, 5, 1), Model: "claude-opus-4-7-20251217", In: 100, Out: 200, CR: 50, CW: 10, Stream: true},
 		{TS: dayAt(2026, 5, 1), Model: "claude-opus-4-7-20251217", In: 200, Out: 300, CR: 100, CW: 20, Stream: true},
@@ -60,6 +61,7 @@ func TestAggregate_Totals(t *testing.T) {
 func TestAggregate_FavoriteModel_AlphabeticalTiebreak(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	writeRecords(t, "5f2c8c4e-1234-4567-8abc-0000000000b1", []Record{
 		{TS: dayAt(2026, 5, 1), Model: "claude-opus-4-7-20251217", In: 100, Out: 100},
 		{TS: dayAt(2026, 5, 1), Model: "claude-sonnet-4-6-20250101", In: 100, Out: 100},
@@ -75,6 +77,7 @@ func TestAggregate_FavoriteModel_AlphabeticalTiebreak(t *testing.T) {
 func TestAggregate_Streaks(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	now := time.Now().UTC().Truncate(24 * time.Hour)
 	recs := []Record{
 		{TS: now, In: 1, Out: 1},
@@ -99,6 +102,7 @@ func TestAggregate_Streaks(t *testing.T) {
 func TestAggregate_CurrentStreakZeroWhenTodayInactive(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	now := time.Now().UTC().Truncate(24 * time.Hour)
 	writeRecords(t, "5f2c8c4e-1234-4567-8abc-0000000000c2", []Record{
 		{TS: now.AddDate(0, 0, -1), In: 1, Out: 1},
@@ -116,6 +120,7 @@ func TestAggregate_CurrentStreakZeroWhenTodayInactive(t *testing.T) {
 func TestAggregate_StreakIgnoresRangeFilter(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	now := time.Now().UTC().Truncate(24 * time.Hour)
 	var recs []Record
 	for d := 0; d < 30; d++ {
@@ -134,6 +139,7 @@ func TestAggregate_StreakIgnoresRangeFilter(t *testing.T) {
 func TestAggregate_RangeFiltersTotals(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	now := time.Now().UTC().Truncate(24 * time.Hour)
 	writeRecords(t, "5f2c8c4e-1234-4567-8abc-0000000000d1", []Record{
 		{TS: now.AddDate(0, 0, -2), In: 100, Out: 100, Stream: true},
@@ -152,6 +158,7 @@ func TestAggregate_RangeFiltersTotals(t *testing.T) {
 func TestAggregate_Range30dFilter(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	now := time.Now().UTC().Truncate(24 * time.Hour)
 	writeRecords(t, "5f2c8c4e-1234-4567-8abc-00000000d30a", []Record{
 		{TS: now.AddDate(0, 0, -15), In: 50, Out: 50, Stream: true},
@@ -169,6 +176,7 @@ func TestAggregate_Range30dFilter(t *testing.T) {
 func TestAggregate_SessionFilter(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	sidA := "5f2c8c4e-1234-4567-8abc-0000000000e1"
 	sidB := "5f2c8c4e-1234-4567-8abc-0000000000e2"
 	writeRecords(t, sidA, []Record{{TS: dayAt(2026, 5, 1), In: 10}})
@@ -185,6 +193,7 @@ func TestAggregate_SessionFilter(t *testing.T) {
 func TestAggregate_LongestSession(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	sidA := "5f2c8c4e-1234-4567-8abc-0000000000f1"
 	writeRecords(t, sidA, []Record{
 		{TS: dayAt(2026, 5, 1), In: 1},
@@ -200,6 +209,7 @@ func TestAggregate_LongestSession(t *testing.T) {
 func TestAggregate_EmptyDir(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	agg, err := LoadAggregate(FilterAll(), time.UTC)
 	if err != nil {
 		t.Fatalf("LoadAggregate empty: %v", err)
@@ -212,6 +222,7 @@ func TestAggregate_EmptyDir(t *testing.T) {
 func TestAggregate_DailyTokensMap(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	writeRecords(t, "5f2c8c4e-1234-4567-8abc-0000000000g1", []Record{
 		{TS: dayAt(2026, 5, 1), In: 100, Out: 100},
 		{TS: dayAt(2026, 5, 1), In: 50, Out: 50},
@@ -232,6 +243,7 @@ func TestAggregate_DailyTokensMap(t *testing.T) {
 func TestAggregate_MostActiveDay(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	writeRecords(t, "5f2c8c4e-1234-4567-8abc-0000000000h1", []Record{
 		{TS: dayAt(2026, 5, 1), In: 10, Out: 10},
 		{TS: dayAt(2026, 5, 4), In: 1000, Out: 1000},
@@ -249,6 +261,7 @@ func TestAggregate_MostActiveDay(t *testing.T) {
 func TestAggregate_MostActiveDay_PerDaySumNotPerRecord(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	writeRecords(t, "5f2c8c4e-1234-4567-8abc-0000000000h2", []Record{
 		// Day 1: ten small records summing to 10000
 		{TS: dayAt(2026, 5, 1), In: 1000},
@@ -280,6 +293,7 @@ func TestAggregate_ReadDirErrorPropagates(t *testing.T) {
 	}
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	// Create ~/.ccm/usage as a regular FILE so ReadDir on it returns
 	// ENOTDIR (not ErrNotExist).
 	if err := os.MkdirAll(tmp+"/.ccm", 0700); err != nil {
@@ -296,6 +310,7 @@ func TestAggregate_ReadDirErrorPropagates(t *testing.T) {
 func TestAggregate_SkipsSubdirs(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	if err := EnsureDir(); err != nil {
 		t.Fatal(err)
 	}
@@ -318,6 +333,7 @@ func TestAggregate_SkipsSubdirs(t *testing.T) {
 func TestAggregate_SkipsNonNDJSONFiles(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	if err := EnsureDir(); err != nil {
 		t.Fatal(err)
 	}
@@ -337,6 +353,7 @@ func TestAggregate_SkipsNonNDJSONFiles(t *testing.T) {
 func TestAggregate_EmptyFavoriteModel(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	if err := EnsureDir(); err != nil {
 		t.Fatal(err)
 	}

@@ -252,6 +252,7 @@ func TestNewSink_DispatchesByContentType(t *testing.T) {
 func TestTeeBody_FinalizesOnEOF(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	sid := "5f2c8c4e-1234-4567-8abc-0123456789ab"
 	body := strings.NewReader(sseEvent("message_start",
 		`{"type":"message_start","message":{"model":"m","usage":{"input_tokens":11,"output_tokens":1}}}`,
@@ -274,6 +275,7 @@ func TestTeeBody_FinalizesOnEOF(t *testing.T) {
 func TestTeeBody_FinalizeIdempotent(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	sid := "5f2c8c4e-1234-4567-8abc-0123456789ab"
 	body := strings.NewReader(sseEvent("message_start",
 		`{"type":"message_start","message":{"model":"m","usage":{"input_tokens":7,"output_tokens":1}}}`,
@@ -297,6 +299,7 @@ func (errReader) Close() error               { return nil }
 func TestTeeBody_FinalizesOnReadError(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	sid := "5f2c8c4e-1234-4567-8abc-0123456789ab"
 	sink := NewSink(sid, http.Header{"Content-Type": []string{"text/event-stream"}}, time.Now().UTC())
 	sse := sink.(*sseSink)
@@ -323,6 +326,7 @@ func (panicSink) Finalize() *Record           { return nil }
 func TestTeeBody_RecoversFromSinkPanic(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	body := strings.NewReader("anything")
 	tee := TeeBody(io.NopCloser(body), panicSink{}, "5f2c8c4e-1234-4567-8abc-0123456789ab")
 	if _, err := io.Copy(io.Discard, tee); err != nil {
@@ -339,6 +343,7 @@ func (panicFinalizeSink) Finalize() *Record           { panic("finalize panic") 
 func TestTeeBody_RecoversFromFinalizePanic(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	body := strings.NewReader("anything")
 	tee := TeeBody(io.NopCloser(body), panicFinalizeSink{}, "5f2c8c4e-1234-4567-8abc-0123456789ab")
 	io.Copy(io.Discard, tee)
@@ -352,6 +357,7 @@ func TestTeeBody_RecoversFromFinalizePanic(t *testing.T) {
 func TestTeeBody_SkipsInvalidSessionID(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	body := strings.NewReader(sseEvent("message_start",
 		`{"type":"message_start","message":{"model":"m","usage":{"input_tokens":1,"output_tokens":1}}}`,
 	))
@@ -367,6 +373,7 @@ func TestTeeBody_SkipsInvalidSessionID(t *testing.T) {
 func TestTeeBody_NilSinkSafe(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	body := strings.NewReader("ignored")
 	tee := TeeBody(io.NopCloser(body), nil, "5f2c8c4e-1234-4567-8abc-0123456789ab")
 	io.Copy(io.Discard, tee)
@@ -378,6 +385,7 @@ func TestTeeBody_NilSinkSafe(t *testing.T) {
 func TestTeeBody_AppendFailureLogsAndContinues(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	t.Setenv("CCM_DEBUG_USAGE", "1")
 	// Make ~/.ccm a regular file so EnsureDir inside Append fails.
 	if err := os.WriteFile(filepath.Join(tmp, ".ccm"), []byte("blocker"), 0600); err != nil {
@@ -396,6 +404,7 @@ func TestTeeBody_AppendFailureLogsAndContinues(t *testing.T) {
 func TestTeeBody_ConcurrentReadAndCloseSafe(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("HOME", tmp)
+	t.Setenv("USERPROFILE", tmp)
 	sid := "5f2c8c4e-1234-4567-8abc-0123456789ab"
 	body := strings.NewReader(sseEvent("message_start",
 		`{"type":"message_start","message":{"model":"m","usage":{"input_tokens":2,"output_tokens":1}}}`,
