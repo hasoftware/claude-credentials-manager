@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"text/tabwriter"
@@ -130,7 +131,41 @@ var (
 	aliasPromptFn   = shellalias.SelectShells
 	aliasIsTTYFn    = func() bool { return term.IsTerminal(int(os.Stdin.Fd())) }
 	aliasLookPathFn = exec.LookPath
+	aliasLauncherFn = invokedLauncher
 )
+
+// launcherNameRe bounds what invokedLauncher will splice, unquoted, into
+// a shell function body.
+var launcherNameRe = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._+-]*$`)
+
+// invokedLauncher returns the command alias bodies should call: the name
+// ccm was started as, when PATH resolves that name to this very
+// executable, otherwise "ccm". The PATH check keeps launcher shims (npm
+// runs the platform binary by absolute path), `go run` temp binaries and
+// test binaries on the default name.
+func invokedLauncher() string {
+	name := filepath.Base(os.Args[0])
+	if ext := filepath.Ext(name); strings.EqualFold(ext, ".exe") {
+		name = strings.TrimSuffix(name, ext)
+	}
+	if name == "ccm" || !launcherNameRe.MatchString(name) {
+		return "ccm"
+	}
+	found, err := exec.LookPath(name)
+	if err != nil {
+		return "ccm"
+	}
+	self, err := os.Executable()
+	if err != nil {
+		return "ccm"
+	}
+	fi, ferr := os.Stat(found)
+	si, serr := os.Stat(self)
+	if ferr != nil || serr != nil || !os.SameFile(fi, si) {
+		return "ccm"
+	}
+	return name
+}
 
 func runAlias(stdout, stderr io.Writer, argv []string) error {
 	a, err := parseAliasArgs(argv)
@@ -273,6 +308,7 @@ func runAliasCreate(stdout, stderr io.Writer, a aliasArgs) error {
 	if path, err := aliasLookPathFn(a.name); err == nil {
 		fmt.Fprintf(stderr, "ccm alias: %q shadows existing binary at %s\n", a.name, path)
 	}
+	shellalias.Launcher = aliasLauncherFn()
 	errs := aliasInstallFn(a.name, a.payload, targets, a.force)
 	var firstErr error
 	for i, e := range errs {

@@ -31,7 +31,7 @@ func (fishShell) EmitAlias(name string, payload []string) string {
 	var b strings.Builder
 	b.WriteString("function ")
 	b.WriteString(name)
-	b.WriteString("; ccm launch")
+	b.WriteString("; " + Launcher + " launch")
 	for _, tok := range payload {
 		b.WriteByte(' ')
 		b.WriteString(fishQuote(tok))

@@ -12,7 +12,7 @@ A single-binary Go CLI for managing multiple Claude OAuth sessions locally. Swit
 npm install -g @hasoftware/ccm
 ```
 
-If you previously installed the upstream `ccm-go` package, remove it first (`npm uninstall -g ccm-go`): both provide the `ccm` command.
+If you previously installed the upstream `ccm-go` package, remove it first (`npm uninstall -g ccm-go`): both provide the `ccm` command. To keep both, see [Running beside upstream ccm](#running-beside-upstream-ccm).
 
 ### Homebrew (macOS / Linux)
 
@@ -54,6 +54,21 @@ make
 ```
 
 `make` bakes version/commit/build-date into the binary. A plain `go build` produces a `dev/unknown` build, which signals an untagged local build via `ccm version`.
+
+### Running beside upstream ccm
+
+To keep upstream's `ccm` and run this fork next to it, install the fork under another command name. npm cannot hold both packages, because both claim the `ccm` command. Use the Windows script or a release binary instead:
+
+```powershell
+& ([scriptblock]::Create((iwr -UseBasicParsing https://raw.githubusercontent.com/hasoftware/claude-credentials-manager/main/scripts/install.ps1))) -Name ccm2
+```
+
+On macOS / Linux, put the release binary on your PATH as `ccm2` instead of `ccm`.
+
+- `ccm` stays upstream's and `ccm2` runs the fork.
+- Both read the same `~/.ccm`, so credentials and aliases are shared. Upstream versions before 1.22 skip grok credentials with a warning.
+- Claude Code still has one active credential: `ccm use` and `ccm2 use` both switch it.
+- An alias runs the command that created it. `ccm2 alias --as …` writes `ccm2 launch …`, and aliases made with `ccm` keep calling `ccm`.
 
 ### Shell completion
 

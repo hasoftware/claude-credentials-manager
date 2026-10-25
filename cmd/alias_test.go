@@ -121,6 +121,8 @@ func resetAliasHooks() {
 	aliasPromptFn = shellalias.SelectShells
 	aliasIsTTYFn = func() bool { return false }
 	aliasLookPathFn = exec.LookPath
+	aliasLauncherFn = invokedLauncher
+	shellalias.Launcher = "ccm"
 }
 
 // fakeBash is a Shell stub used by dispatch tests; the install hook is

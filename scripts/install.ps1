@@ -16,17 +16,26 @@
 .PARAMETER InstallDir
     Override the install directory. Defaults to %LOCALAPPDATA%\Programs\ccm.
 
+.PARAMETER Name
+    Command name to install as. Defaults to ccm. Pick another name, e.g.
+    ccm2, to keep this build beside a different ccm on PATH such as
+    upstream's npm package ccm-go.
+
 .EXAMPLE
     iwr https://raw.githubusercontent.com/hasoftware/claude-credentials-manager/main/scripts/install.ps1 | iex
 
 .EXAMPLE
     .\install.ps1 -Version v2.0.0
+
+.EXAMPLE
+    & ([scriptblock]::Create((iwr -UseBasicParsing https://raw.githubusercontent.com/hasoftware/claude-credentials-manager/main/scripts/install.ps1))) -Name ccm2
 #>
 
 [CmdletBinding()]
 param(
     [string]$Version,
-    [string]$InstallDir
+    [string]$InstallDir,
+    [string]$Name = 'ccm'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -38,6 +47,10 @@ $ErrorActionPreference = 'Stop'
     [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
 
 $Repo = 'hasoftware/claude-credentials-manager'
+
+if ($Name -notmatch '^[A-Za-z0-9][A-Za-z0-9._+-]*$') {
+    throw "Invalid -Name '$Name'; use letters, digits, '.', '_', '+' or '-'."
+}
 
 if (-not $InstallDir -or $InstallDir.Trim() -eq '') {
     if (-not $env:LOCALAPPDATA) {
@@ -115,7 +128,7 @@ if (-not $Version -or $Version.Trim() -eq '') {
 
 $asset = "ccm-windows-$arch.exe"
 $url = "https://github.com/$Repo/releases/download/$Version/$asset"
-$target = Join-Path $InstallDir 'ccm.exe'
+$target = Join-Path $InstallDir "$Name.exe"
 
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 
@@ -128,14 +141,14 @@ try {
 } catch {
     if (Test-Path $tmp) { Remove-Item -Force $tmp -ErrorAction SilentlyContinue }
     if ($_.Exception.Message -match 'used by another process') {
-        throw "Cannot replace $target - another process (likely 'ccm serve') has it open. Stop it and re-run."
+        throw "Cannot replace $target - another process (likely '$Name serve') has it open. Stop it and re-run."
     }
     throw
 }
 
 $added = Add-UserPathEntry $InstallDir
 Write-Host ''
-Write-Host "ccm installed: $target"
+Write-Host "$Name installed: $target"
 if ($added) {
     Write-Host "Added $InstallDir to your user PATH."
     Write-Host 'Open a new terminal so the PATH update takes effect.'
@@ -145,11 +158,11 @@ if ($added) {
 
 # Try printing the version from the absolute path. The CURRENT shell's
 # $env:Path is a snapshot taken at launch - even after we register the
-# new directory, ccm.exe is not reachable by bare name here until the
+# new directory, the binary is not reachable by bare name here until the
 # user opens a new shell. Calling by absolute path sidesteps that.
 Write-Host ''
 try {
     & $target version
 } catch {
-    Write-Host '(could not run ccm version; open a new shell and try `ccm version`)'
+    Write-Host "(could not run $Name version; open a new shell and try ``$Name version``)"
 }
