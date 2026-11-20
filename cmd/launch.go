@@ -24,6 +24,8 @@ func init() {
 	launchCmd.Flags().Duration("rebalance-interval", 5*time.Minute, "tick interval for load-balance rotation (min 30s, max 1h); only meaningful with --load-balance")
 	launchCmd.Flags().StringArrayVar(&launchModelAliases, "model-alias", nil,
 		"model alias rule like 'claude-opus-*=gpt-5-codex' (repeatable)")
+	launchCmd.Flags().StringVar(&launchCodexModel, "codex-model", "", "Codex profile: uthink, udeep, ulens or udash")
+	launchCmd.Flags().StringVar(&launchCodexSpeed, "codex-speed", "", "Codex processing speed: standard or fast (higher usage)")
 	launchCmd.Args = validateLaunchArgs
 	launchCmd.PreRunE = requireOnline
 }
@@ -123,6 +125,9 @@ can use ` + "`ccm launch <id> -- -p 'hi'`" + ` for a one-shot query.`,
 		// enforced the mutual-exclusivity invariants by the time we
 		// get here.
 		if loadBalance {
+			if launchCodexModel != "" || launchCodexSpeed != "" {
+				return errors.New("Codex profiles require a single credential or --via")
+			}
 			if err := validateRebalanceDuration(rebalanceInterval); err != nil {
 				return err
 			}
@@ -148,6 +153,9 @@ func runLaunchLocal(idOrName string, claudeArgs []string) error {
 		return err
 	}
 
+	if (launchCodexModel != "" || launchCodexSpeed != "") && cred.ProviderName() != "codex" {
+		return errors.New("Codex profile requires a Codex credential")
+	}
 	// Parse --model-alias flag values into an alias map. Boot-time
 	// conflict detection in alias.Parse rejects overlapping patterns.
 	aliasMap, err := alias.Parse(launchModelAliases)
@@ -171,6 +179,10 @@ func runLaunchLocal(idOrName string, claudeArgs []string) error {
 		}
 	}
 
+	claudeArgs, childEnv, err := codexLaunchOptions(claudeArgs, os.Environ(), launchCodexModel, launchCodexSpeed)
+	if err != nil {
+		return err
+	}
 	proxy, err := share.NewLocalProxy(cred)
 	if err != nil {
 		return fmt.Errorf("start local proxy: %w", err)
@@ -181,7 +193,7 @@ func runLaunchLocal(idOrName string, claudeArgs []string) error {
 	proxyErrC := make(chan error, 1)
 	go func() { proxyErrC <- proxy.Start() }()
 
-	claudeBin, err := exec.LookPath("claude")
+	claudeBin, err := claudeForLaunch()
 	if err != nil {
 		return fmt.Errorf("could not find 'claude' on PATH")
 	}
@@ -193,7 +205,7 @@ func runLaunchLocal(idOrName string, claudeArgs []string) error {
 	// our own value is the only one the child sees (otherwise an
 	// inherited override could win when the test or wrapping shell
 	// pre-populated it).
-	env := filterEnv(os.Environ(),
+	env := filterEnv(childEnv,
 		"ANTHROPIC_API_KEY",
 		"ANTHROPIC_AUTH_TOKEN",
 		"ANTHROPIC_BASE_URL",
@@ -243,7 +255,7 @@ func runLaunchLoadBalance(args []string, claudeArgs []string, rebalanceInterval 
 		return err
 	}
 
-	claudeBin, err := exec.LookPath("claude")
+	claudeBin, err := claudeForLaunch()
 	if err != nil {
 		return errors.New("could not find 'claude' on PATH")
 	}
@@ -273,13 +285,17 @@ func runLaunchRemote(rawTicket string, claudeArgs []string) error {
 		return fmt.Errorf("invalid ticket: %w", err)
 	}
 
-	claudeBin, err := exec.LookPath("claude")
+	claudeBin, err := claudeForLaunch()
 	if err != nil {
 		return fmt.Errorf("could not find 'claude' on PATH")
 	}
 
+	claudeArgs, env, err := codexLaunchOptions(claudeArgs, os.Environ(), launchCodexModel, launchCodexSpeed)
+	if err != nil {
+		return err
+	}
 	child := exec.Command(claudeBin, claudeArgs...)
-	child.Env = append(os.Environ(),
+	child.Env = append(env,
 		"ANTHROPIC_BASE_URL="+ticket.Scheme+"://"+ticket.Host,
 		"ANTHROPIC_AUTH_TOKEN="+ticket.Token,
 	)

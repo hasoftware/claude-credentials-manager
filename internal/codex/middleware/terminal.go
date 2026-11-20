@@ -19,6 +19,8 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/codex/models"
+
 	"github.com/hasoftware/claude-credentials-manager/v2/internal/codex/identity"
 	"github.com/hasoftware/claude-credentials-manager/v2/internal/codex/transport"
 	"github.com/hasoftware/claude-credentials-manager/v2/internal/responses"
@@ -77,6 +79,10 @@ func (t *Terminal) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	matched := sharemw.AliasMatched(r.Context())
 	effectiveModel := sharemw.EffectiveModel(r.Context())
 	originalModel := sharemw.OriginalModel(r.Context())
+	profile, isProfile := models.ByAlias(originalModel)
+	if !matched && isProfile {
+		effectiveModel, matched = profile.Upstream, true
+	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -97,6 +103,7 @@ func (t *Terminal) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// translator so cache slots line up with upstream Codex.
 		reqOpts := responses.RequestOpts{
 			TargetModel: effectiveModel,
+			CodexControls: models.SupportsControls(effectiveModel),
 			SessionID:   sessionID,
 		}
 		outBody, err = responses.TranslateRequest(body, reqOpts)
@@ -129,7 +136,7 @@ func (t *Terminal) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if !matched {
 			modelOnWire = originalModel
 		}
-		if shouldDieFast(errBody, modelOnWire) {
+		if !isProfile && shouldDieFast(errBody, modelOnWire) {
 			t.opts.OnSessionDie(fmt.Sprintf(
 				"codex returned model_not_found for %q (alias matched=%v, original=%q)",
 				modelOnWire, matched, originalModel))

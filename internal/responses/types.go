@@ -18,6 +18,7 @@ type anthropicRequest struct {
 	Tools         []anthropicTool        `json:"tools,omitempty"`
 	ToolChoice    *anthropicToolChoice   `json:"tool_choice,omitempty"`
 	Thinking      *anthropicThinkingPref `json:"thinking,omitempty"`
+	Speed string `json:"speed,omitempty"`
 	OutputConfig  *anthropicOutputConfig `json:"output_config,omitempty"`
 	MaxTokens     int                    `json:"max_tokens,omitempty"`     // dropped on outbound
 	Temperature   *float64               `json:"temperature,omitempty"`    // dropped

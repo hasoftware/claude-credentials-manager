@@ -14,9 +14,10 @@ import (
 //     Populates the outbound `prompt_cache_key` body field when
 //     non-empty; omitted otherwise.
 type RequestOpts struct {
-	TargetModel string
-	ServiceTier string
-	SessionID   string
+	TargetModel   string
+	CodexControls bool // enables supported effort levels and speed for known Codex profiles
+	ServiceTier   string
+	SessionID     string
 	// Dialect selects the upstream's Responses flavour. The zero value is
 	// codex. Not settable from JSON (fixture opts use a "dialect" name).
 	Dialect Dialect `json:"-"`
@@ -106,13 +107,30 @@ func TranslateRequest(claudeBody []byte, opts RequestOpts) ([]byte, error) {
 		out.ToolChoice = translateToolChoice(in.ToolChoice, out.Tools)
 	}
 
-	// Codex always emits reasoning.effort, defaulting to "none" when the
-	// client expressed no thinking intent; grok (OmitNoneEffort) drops the
-	// object instead because it 400s on "none". When effort is non-none,
-	// also send the dialect's summary mode — without it chatgpt.com paces
-	// the budget such that the model reasons silently and returns
-	// response.incomplete{max_output_tokens} with empty output.
+	// Some Codex models require reasoning even when the caller does not
+	// request it. Use their lowest effort and preserve explicit settings.
 	effort := resolveReasoningEffort(&in)
+	if opts.CodexControls {
+		if in.OutputConfig != nil && in.OutputConfig.Effort == "max" {
+			effort = "max"
+		}
+		if effort == "none" || effort == "minimal" {
+			effort = "low"
+		}
+		switch in.Speed {
+		case "", "standard":
+		case "fast":
+			out.ServiceTier = "priority"
+		default:
+			return nil, fmt.Errorf("unsupported Codex speed %q", in.Speed)
+		}
+	}
+	if effort == "none" {
+		switch out.Model {
+		case "gpt-6.1-sol", "gpt-6.2-sol":
+			effort = "low"
+		}
+	}
 	if effort != "none" || !d.OmitNoneEffort {
 		out.Reasoning = &codexReasoning{Effort: effort}
 		if effort != "none" {

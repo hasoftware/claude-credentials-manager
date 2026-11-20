@@ -834,10 +834,14 @@ func TestTerminal_CollectContextCancel(t *testing.T) {
 	}
 	<-done
 
-	// Context cancellation causes either Transport.Do to fail (502) or
-	// Collect to return ctx.Err() (500). Either is ≥400.
-	if rr.Code < 400 {
-		t.Errorf("status = %d, want ≥400 on context cancellation", rr.Code)
+	// Once the upstream headers have arrived, Collect has already flushed
+	// HTTP 200. Both cancellation paths return an Anthropic error body.
+	var failure struct { Type string }
+	if err := json.Unmarshal(rr.Body.Bytes(), &failure); err != nil || failure.Type != "error" {
+		t.Fatalf("expected a cancellation error, HTTP %d: %s", rr.Code, rr.Body.String())
+	}
+	if rr.Code != http.StatusOK && rr.Code != http.StatusBadGateway {
+		t.Errorf("unexpected cancellation status %d", rr.Code)
 	}
 }
 

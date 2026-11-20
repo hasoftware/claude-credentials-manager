@@ -304,6 +304,32 @@ ccm share <codex-cred-name> \
   --max-concurrency 3
 ```
 
+### Codex model picker, effort and speed
+
+Build the updated CCM on the gateway and client. Use the same source revision on both. The client needs Claude Code 2.1.257 or newer for per-model capability hints in the picker. Credentials stay on the gateway. On the server run `ccm login codex` and `ccm share <credential>`. Keep the session ticket private.
+
+On any client with that ticket:
+
+```sh
+ccm launch --via <ticket> --codex-model uthink
+ccm launch --via <ticket> --codex-model udeep --codex-speed fast -- --effort high
+```
+
+For a local Codex credential, replace `--via <ticket>` with its name or ID. The same binary supplies the picker and built-in routing on Windows, Linux and macOS. Run these examples using the native binary (`ccm.exe` or `ccm2.exe` on Windows). In PowerShell, quote the actual ticket or pass a variable.
+
+| Short ID | Picker / workflow ID | Upstream | Best fit |
+| --- | --- | --- | --- |
+| uthink | uthink-oai | gpt-6.2-sol | Research, everyday coding and PR reviews |
+| udeep | udeep-oai | gpt-6.2-astra | Cross-service debugging and architecture |
+| ulens | ulens-oai | gpt-6.1-terra | Screenshots, UI and visual tasks |
+| udash | udash-oai | gpt-6-luna | Extraction, classification and small changes |
+
+Use `/model` to switch profiles. Select `low`, `medium`, `high`, `xhigh` or `max` with Claude Code’s `/effort` or startup `--effort`. CCM forwards explicit levels on these four upstreams. A request without a usable effort gets `low`. The picker uses a Claude capability hint for the effort UI. Actual routing and account availability follow the Codex model.
+
+Standard requests omit the priority tier. `--codex-speed fast` asks for `service_tier: priority` and can increase account usage. `--codex-speed standard` requests standard processing. These flags apply to the launched session, including model switches. With the flag omitted, CCM translates a supported model’s incoming Messages `speed: fast` when the client sends it. Native `/fast` availability varies by Claude Code provider and version. A priority request alone does not confirm which tier the backend served.
+
+Explicit server-side `--model-alias` rules take precedence over the built-in IDs. Existing Claude and Grok configurations retain their own model and effort handling.
+
 ### --model-alias
 
 Repeatable. Maps inbound model names (what Claude Code asks for) to

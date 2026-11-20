@@ -4,11 +4,9 @@
 // chatgpt-account-id. No spawn-codex-CLI capture needed.
 package identity
 
-// Static identity values shipped with ccm. Mirrors what codex CLI 0.129
-// emits in its outbound requests; review on codex CLI major version
-// bumps. Empirical evidence (OmniRoute production) shows chatgpt.com's
-// /backend-api/codex/responses doesn't gate on these, but they're set
-// for defensive plausibility.
+// Static identity values sent with Codex Responses requests.
+// Keep the version and user agent in sync. The backend rejects some models
+// when the request reports a client version below their minimum.
 //
 // StaticUserAgent's platform/arch portion is intentionally hardcoded
 // (mirrors OmniRoute's "(Windows 10.0.26100; x64)" approach: every
@@ -17,9 +15,9 @@ package identity
 // differently and create a unique signal chatgpt.com could
 // potentially track.
 const (
-	StaticVersion    = "0.129.0"
+	StaticVersion    = "0.169.1"
 	StaticOpenaiBeta = "responses=experimental"
-	StaticUserAgent  = "codex-cli/0.129.0 (Linux; x86_64)"
+	StaticUserAgent  = "codex-cli/" + StaticVersion + " (Linux; x86_64)"
 )
 
 // Static parity headers shipped with ccm. Mirror what the real codex

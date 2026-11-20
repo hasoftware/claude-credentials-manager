@@ -338,13 +338,11 @@ func TestTranslateRequest_ToolResultPrecedingContent(t *testing.T) {
 	}
 }
 
-
 func jsonEqual(a, b any) bool {
 	ja, _ := json.Marshal(a)
 	jb, _ := json.Marshal(b)
 	return string(ja) == string(jb)
 }
-
 
 func TestTranslateRequest_HoistSystemToInstructions(t *testing.T) {
 	body := `{"model":"claude-opus-4.7","system":"be helpful","messages":[{"role":"user","content":[{"type":"text","text":"hi"}]}]}`
@@ -822,5 +820,28 @@ func TestResolveReasoningEffort_ThinkingDisabledDefaultsToNone(t *testing.T) {
 	}
 	if eff, _ := reas["effort"].(string); eff != "none" {
 		t.Errorf("effort=%q, want none", eff)
+	}
+}
+
+func TestTranslateRequest_UsesMinimumEffortForCodexSol(t *testing.T) {
+	body := []byte(`{"model":"claude-sonnet-5-5","messages":[{"role":"user","content":"hi"}]}`)
+	for _, model := range []string{"gpt-6.1-sol", "gpt-6.2-sol"} {
+		t.Run(model, func(t *testing.T) {
+			got, err := responses.TranslateRequest(body, responses.RequestOpts{TargetModel: model})
+			if err != nil {
+				t.Fatal(err)
+			}
+			var request struct {
+				Reasoning struct {
+					Effort string
+				}
+			}
+			if err := json.Unmarshal(got, &request); err != nil {
+				t.Fatal(err)
+			}
+			if request.Reasoning.Effort != "low" {
+				t.Errorf("reasoning effort = %q, want low", request.Reasoning.Effort)
+			}
+		})
 	}
 }
