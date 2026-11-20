@@ -35,7 +35,7 @@ import (
 
 const (
 	defaultUpstream = "https://cli-chat-proxy.grok.com"
-	defaultModel    = "grok-4.7"
+	DefaultModel    = "grok-4.7"
 )
 
 // ctxCompactThreshold is the fraction of grok's context window at which ccm
@@ -92,7 +92,7 @@ func NewTerminal(opts TerminalOpts) *Terminal {
 		opts.UpstreamURL = defaultUpstream
 	}
 	if opts.DefaultModel == "" {
-		opts.DefaultModel = defaultModel
+		opts.DefaultModel = DefaultModel
 	}
 	if opts.OnSessionDie == nil {
 		opts.OnSessionDie = func(string) {} // no-op default

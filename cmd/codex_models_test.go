@@ -8,7 +8,7 @@ import (
 )
 
 func TestCodexLaunchSettings(t *testing.T) {
-	args, env, err := codexLaunchOptions([]string{"--effort", "max"}, []string{`CLAUDE_CODE_EXTRA_BODY={"custom":true}`}, "udeep", "fast")
+	args, env, err := codexLaunchOptions([]string{"--effort", "max"}, []string{`CLAUDE_CODE_EXTRA_BODY={"custom":true}`}, "udeep", "fast", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -28,7 +28,7 @@ func TestCodexLaunchSettings(t *testing.T) {
 		t.Fatalf("unexpected child env: %v", env)
 	}
 	for _, input := range [][2]string{{"bogus", "fast"}, {"uthink", "bogus"}} {
-		if _, _, err := codexLaunchOptions(nil, nil, input[0], input[1]); err == nil {
+		if _, _, err := codexLaunchOptions(nil, nil, input[0], input[1], false); err == nil {
 			t.Errorf("accepted %v", input)
 		}
 	}
@@ -40,7 +40,7 @@ func TestCodexProfilesKeepClaudeFamilies(t *testing.T) {
 		"ANTHROPIC_DEFAULT_SONNET_MODEL=existing-sonnet",
 		"ANTHROPIC_DEFAULT_HAIKU_MODEL=existing-haiku",
 	}} {
-		args, env, err := codexLaunchOptions(nil, original, "uthink", "")
+		args, env, err := codexLaunchOptions(nil, original, "uthink", "", true)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -56,8 +56,8 @@ func TestCodexProfilesKeepClaudeFamilies(t *testing.T) {
 		if err := json.Unmarshal([]byte(args[1]), &settings); err != nil {
 			t.Fatal(err)
 		}
-		if settings.ModelPicker.ReplaceBuiltInOptions || len(settings.ModelPicker.Options) != 4 {
-			t.Fatalf("expected four additional model rows: %s", args[1])
+		if settings.ModelPicker.ReplaceBuiltInOptions || len(settings.ModelPicker.Options) != 5 || settings.ModelPicker.Options[4].Model != "grok-4.7" {
+			t.Fatalf("expected four Codex rows and one additional Grok row: %s", args[1])
 		}
 	}
 }

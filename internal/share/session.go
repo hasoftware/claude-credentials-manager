@@ -65,6 +65,7 @@ func ValidatePinnedToken(s string) error {
 // Debug mirrors CCM_SHARE_DEBUG=1 and enables the per-request director
 // logging that already lives in proxy.go.
 type Options struct {
+	GrokCredential *store.Credential // optional second provider on a Codex share
 	BindHost      string
 	BindPort      int
 	CapturePrompt string // if empty, runCapture falls back to DefaultCapturePrompt
@@ -236,6 +237,17 @@ func (*defaultStarter) StartSession(cred *store.Credential, opts Options) (Sessi
 	}
 	proxy.SetAliasMap(opts.AliasMap)
 	proxy.SetMaxConcurrency(opts.MaxConcurrency)
+	if g := opts.GrokCredential; g != nil {
+		if cred == nil || cred.ProviderName() != "codex" || g.ProviderName() != "grok" || opts.Pool != nil {
+			_ = proxy.Close()
+			return nil, errors.New("--grok-credential requires a Codex primary and a Grok secondary credential")
+		}
+		proxy.extraGrok, err = extraGrokHandler(g, proxy.aliasMap)
+		if err != nil {
+			_ = proxy.Close()
+			return nil, err
+		}
+	}
 
 	proxyErrC := make(chan error, 1)
 	go func() { proxyErrC <- proxy.Start() }()

@@ -26,6 +26,7 @@ func init() {
 		"model alias rule like 'claude-opus-*=gpt-5-codex' (repeatable)")
 	launchCmd.Flags().StringVar(&launchCodexModel, "codex-model", "", "Codex profile: uthink, udeep, ulens or udash")
 	launchCmd.Flags().StringVar(&launchCodexSpeed, "codex-speed", "", "Codex processing speed: standard or fast (higher usage)")
+	launchCmd.Flags().BoolVar(&launchWithGrok, "with-grok", false, "add the Grok picker row for a remote share configured with --grok-credential")
 	launchCmd.Args = validateLaunchArgs
 	launchCmd.PreRunE = requireOnline
 }
@@ -124,6 +125,9 @@ can use ` + "`ccm launch <id> -- -p 'hi'`" + ` for a one-shot query.`,
 		// validateLaunchArgs (wired as launchCmd.Args) has already
 		// enforced the mutual-exclusivity invariants by the time we
 		// get here.
+		if launchWithGrok && via == "" {
+			return errors.New("--with-grok requires --via and a share configured with --grok-credential")
+		}
 		if loadBalance {
 			if launchCodexModel != "" || launchCodexSpeed != "" {
 				return errors.New("Codex profiles require a single credential or --via")
@@ -179,7 +183,7 @@ func runLaunchLocal(idOrName string, claudeArgs []string) error {
 		}
 	}
 
-	claudeArgs, childEnv, err := codexLaunchOptions(claudeArgs, os.Environ(), launchCodexModel, launchCodexSpeed)
+	claudeArgs, childEnv, err := codexLaunchOptions(claudeArgs, os.Environ(), launchCodexModel, launchCodexSpeed, false)
 	if err != nil {
 		return err
 	}
@@ -290,7 +294,7 @@ func runLaunchRemote(rawTicket string, claudeArgs []string) error {
 		return fmt.Errorf("could not find 'claude' on PATH")
 	}
 
-	claudeArgs, env, err := codexLaunchOptions(claudeArgs, os.Environ(), launchCodexModel, launchCodexSpeed)
+	claudeArgs, env, err := codexLaunchOptions(claudeArgs, os.Environ(), launchCodexModel, launchCodexSpeed, launchWithGrok)
 	if err != nil {
 		return err
 	}

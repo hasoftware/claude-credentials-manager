@@ -40,6 +40,7 @@ var (
 
 func init() {
 	rootCmd.AddCommand(shareCmd)
+	shareCmd.Flags().String("grok-credential", "", "also serve the Grok picker model with this xAI credential (single Codex share)")
 	shareCmd.Flags().String("prompt", share.DefaultCapturePrompt, "prompt passed to `claude -p` during identity capture")
 	shareCmd.Flags().String("bind-host", "", "host/IP the remote side will dial (goes into the ticket); presence skips the Cloudflare tunnel and makes the listener LAN-reachable")
 	shareCmd.Flags().Int("bind-port", 0, "pinned TCP port for the proxy listener (default: OS-assigned); works with or without --bind-host")
@@ -172,6 +173,11 @@ The share session stays alive until you press Ctrl-C.`,
 
 		passthroughTickets, _ := cmd.Flags().GetStringArray("passthrough")
 
+		grokID, _ := cmd.Flags().GetString("grok-credential")
+		if grokID != "" && (loadBalance || len(passthroughTickets) != 0 || len(args) != 1) {
+			return fmt.Errorf("--grok-credential requires one primary Codex credential")
+		}
+
 		var passthroughSeeds []share.PassthroughSeed
 		if len(passthroughTickets) > 0 {
 			fmt.Fprintln(os.Stderr, "ccm share: warning: passthrough adds a network hop; deeply nested or cyclic chains will degrade performance")
@@ -205,6 +211,12 @@ The share session stays alive until you press Ctrl-C.`,
 			cred, err := store.Resolve(args[0])
 			if err != nil {
 				return err
+			}
+			if grokID != "" {
+				shareOpts.GrokCredential, err = store.Resolve(grokID)
+				if err != nil {
+					return fmt.Errorf("--grok-credential: %w", err)
+				}
 			}
 			return runShareSingle(cred, shareOpts)
 		}

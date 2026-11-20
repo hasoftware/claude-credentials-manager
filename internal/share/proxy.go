@@ -173,6 +173,7 @@ type Proxy struct {
 	// discard. Lazy because the grok fields above are set after NewProxy.
 	grokTermOnce sync.Once
 	grokTerm     http.Handler
+	extraGrok    http.Handler // optional sibling of the Codex terminal
 
 	// viaID is a per-process loop-detection marker. NewProxy mints
 	// it; handleServe rejects inbound requests whose Via header
@@ -298,6 +299,17 @@ func NewProxy(bindAddr string) (*Proxy, error) {
 		// (SetAliasMap, SetSharedSecret, etc.) must complete before Start
 		// — there is no concurrent write race because Start blocks on
 		// Serve and setters run on the construction goroutine.
+		if p.extraGrok != nil {
+			// The listener starts in capture mode. Publish both provider routes
+			// only after Transition has installed ticket authentication.
+			p.modeMu.RLock()
+			serving := p.mode == modeServing
+			p.modeMu.RUnlock()
+			if !serving {
+				p.handleCapture(w, r)
+				return
+			}
+		}
 		terminal := p.terminalForProvider()
 		p.pipelineHandler(terminal).ServeHTTP(w, r)
 	})
@@ -452,7 +464,10 @@ func (p *Proxy) pipelineHandler(terminal http.Handler) http.Handler {
 		middleware.NewCredSemaphore(p.maxConcurrency),
 	)
 	if p.bearerSrc != nil {
-		steps = append(steps, middleware.NewUpstreamAuthReplace(p.bearerSrc))
+		terminal = middleware.NewUpstreamAuthReplace(p.bearerSrc).Apply(terminal)
+	}
+	if p.extraGrok != nil {
+		terminal = dispatchGrokProfile(terminal, p.extraGrok)
 	}
 	return pipeline.New(steps...).Handler(terminal)
 }

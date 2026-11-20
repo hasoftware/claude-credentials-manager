@@ -7,15 +7,18 @@ import (
 	"runtime"
 	"strings"
 
+	grokmw "github.com/hasoftware/claude-credentials-manager/v2/internal/grok/middleware"
+
 	"github.com/hasoftware/claude-credentials-manager/v2/internal/codex/models"
 )
 
 var launchCodexModel, launchCodexSpeed string
+var launchWithGrok bool
 
 // Native executables preserve quoted JSON settings on Windows even when
 // a shell wrapper called claude.cmd also appears earlier on PATH.
 func claudeForLaunch() (string, error) {
-	if runtime.GOOS == "windows" && (launchCodexModel != "" || launchCodexSpeed != "") {
+	if runtime.GOOS == "windows" && (launchCodexModel != "" || launchCodexSpeed != "" || launchWithGrok) {
 		if path, err := exec.LookPath("claude.exe"); err == nil {
 			return path, nil
 		}
@@ -25,8 +28,8 @@ func claudeForLaunch() (string, error) {
 
 // codexLaunchOptions builds per-child settings. No account or machine paths
 // are stored, and the parent shell's environment is never changed.
-func codexLaunchOptions(args, env []string, model, speed string) ([]string, []string, error) {
-	if model == "" && speed == "" {
+func codexLaunchOptions(args, env []string, model, speed string, withGrok bool) ([]string, []string, error) {
+	if model == "" && speed == "" && !withGrok {
 		return args, env, nil
 	}
 	if model == "" {
@@ -42,6 +45,9 @@ func codexLaunchOptions(args, env []string, model, speed string) ([]string, []st
 			"model": p.ID + "-oai", "label": p.Label, "description": p.Description,
 			"behavesAs": "claude-opus-4-8",
 		})
+	}
+	if withGrok {
+		rows = append(rows, map[string]string{"model": grokmw.DefaultModel, "label": "Grok · xAI", "description": "Grok 4.7 · Trò chuyện và lập trình qua tài khoản xAI"})
 	}
 	settings, err := json.Marshal(map[string]any{"modelPicker": map[string]any{"options": rows}})
 	if err != nil {

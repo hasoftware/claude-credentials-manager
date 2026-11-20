@@ -304,6 +304,10 @@ ccm share <codex-cred-name> \
   --max-concurrency 3
 ```
 
+### Optional Grok model on a Codex share
+
+Log in to Codex and Grok under the same gateway service account. Use `ccm share <codex-id> --grok-credential <grok-id>` on the server. On a client, run `ccm launch --via <ticket> --codex-model uthink --with-grok`. In `/model`, select **Grok · xAI** to use Grok 4.7 with the gateway’s Grok account. The four Codex profiles and built-in Claude picker rows keep their own IDs. This two-provider ticket serves Codex and Grok. Native Claude selections require a Claude-backed session.
+
 ### Codex model picker, effort and speed
 
 Build the updated CCM on the gateway and client. Use the same source revision on both. The client needs Claude Code 2.1.257 or newer for per-model capability hints in the picker. Credentials stay on the gateway. On the server run `ccm login codex` and `ccm share <credential>`. Keep the session ticket private.
