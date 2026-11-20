@@ -47,15 +47,6 @@ func codexLaunchOptions(args, env []string, model, speed string) ([]string, []st
 	if err != nil {
 		return nil, nil, err
 	}
-	// Background Claude Code tasks can select a family alias independently
-	// of --model. Route them through the same Codex gateway.
-	for _, family := range []struct{ key, model string }{
-		{"ANTHROPIC_DEFAULT_HAIKU_MODEL", "udash-oai"},
-		{"ANTHROPIC_DEFAULT_SONNET_MODEL", "uthink-oai"},
-		{"ANTHROPIC_DEFAULT_OPUS_MODEL", "udeep-oai"},
-	} {
-		env = append(filterEnv(env, family.key), family.key+"="+family.model)
-	}
 	if speed != "" {
 		if speed != "standard" && speed != "fast" {
 			return nil, nil, fmt.Errorf("unsupported Codex speed %q (use standard or fast)", speed)
