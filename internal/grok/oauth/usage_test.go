@@ -221,3 +221,17 @@ func TestPeriodName(t *testing.T) {
 		}
 	}
 }
+
+func TestWeeklyUsageMissingPercentage(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"config":{"currentPeriod":{"type":"USAGE_PERIOD_TYPE_WEEKLY"}}}`))
+	}))
+	defer server.Close()
+	old := BillingURL
+	BillingURL = server.URL
+	defer func() { BillingURL = old }()
+	windows, err := fetchWeeklyQuota("test")
+	if err != nil || len(windows) != 0 {
+		t.Fatalf("missing provider value: %+v %v", windows, err)
+	}
+}

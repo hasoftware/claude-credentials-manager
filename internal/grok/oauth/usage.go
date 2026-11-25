@@ -63,7 +63,8 @@ func fetchWeeklyQuota(accessToken string) ([]oauth.Quota, error) {
 		return nil, fmt.Errorf("parse billing: %w", err)
 	}
 	if r.Config.CreditUsagePercent == nil {
-		return nil, fmt.Errorf("weekly usage was not reported")
+		// Billing can include period dates without a utilization percentage.
+		return nil, nil
 	}
 	resets := r.Config.CurrentPeriod.End
 	if resets == "" {
