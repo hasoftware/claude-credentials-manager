@@ -3,8 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <script src="/static/appearance.js?v=1"></script>
   <title>{{.Title}} · ccm serve</title>
-  <link rel="stylesheet" href="/static/style.css?v=nav2">
+  <link rel="stylesheet" href="/static/style.css?v=appearance1">
 </head>
 <body>
   {{block "page" .}}<main>{{template "body" .}}</main>{{end}}

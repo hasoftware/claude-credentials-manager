@@ -249,7 +249,7 @@ Both flags required. The endpoint must be a full URL with `http`/`https` scheme 
 
 ### Admin SSO and web relogin
 
-The CCM2 dashboard embeds the HASOFT theme from DESIGN.md. For a dedicated Dex v2.46.1 frontend, copy its stock web directory, overlay the two files from deploy/dex/templates into templates/, and place deploy/dex/theme/styles.css and internal/serve/static/design.css together in themes/hasoft/. Copy internal/serve/static/fonts into themes/hasoft/fonts for the self-hosted Inter typeface. Set frontend.dir to this web directory and frontend.theme to hasoft, then restart Dex.
+The CCM2 dashboard embeds the HASOFT theme from DESIGN.md. For a dedicated Dex v2.46.1 frontend, copy its stock web directory, overlay the two files from deploy/dex/templates into templates/, and place deploy/dex/theme/styles.css, internal/serve/static/design.css and internal/serve/static/appearance.js together in themes/hasoft/. Copy internal/serve/static/fonts into themes/hasoft/fonts for the self-hosted Inter typeface. Set frontend.dir to this web directory and frontend.theme to hasoft, then restart Dex.
 
 For the HASOFT tunnel deployment, point the SSO hostname at `http://127.0.0.1:5556`, run Caddy with `deploy/dex/Caddyfile`, and set Dex's `web.http` to `127.0.0.1:5557`. Set `CCM_RELOGIN_ORIGIN=https://sso.hoanganhdev.com` on the admin service and register that origin's `/auth/callback` as a second redirect URI for the CCM2 client. Configure the corresponding Host in the Caddyfile for your deployment. Dex handles provider discovery and HASOFT authentication. The portal shows only provider accounts and their reconnection flow.
 

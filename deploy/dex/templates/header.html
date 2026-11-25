@@ -2,9 +2,11 @@
 <html lang="en"><head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <script src="{{ url .ReqPath "theme/appearance.js" }}?v=1"></script>
   <title>{{ issuer }} · Single sign-on</title>
   <link href="{{ url .ReqPath "static/main.css" }}" rel="stylesheet">
-  <link href="{{ url .ReqPath "theme/styles.css" }}?v=inter1" rel="stylesheet">
+  <link href="{{ url .ReqPath "theme/styles.css" }}?v=appearance1" rel="stylesheet">
 </head><body class="theme-body">
-<header class="brand-bar"><div class="brand"><span class="brand-mark" aria-hidden="true">H</span><span>HASOFT</span><span class="brand-product">Single sign-on</span></div></header>
+<header class="brand-bar"><div class="brand"><span class="brand-mark" aria-hidden="true">H</span><span>HASOFT</span><span class="brand-product">Single sign-on</span></div><fieldset class="appearance-picker" data-appearance-picker hidden><legend>Appearance</legend></fieldset></header>
 <div class="dex-container">

@@ -1,5 +1,5 @@
 {{define "body"}}
-<header class="brand-bar"><div class="brand"><span class="brand-mark" aria-hidden="true">H</span>HASOFT <span class="brand-product">Provider access</span></div><form method="post" action="/auth/logout"><button class="btn ghost sm">Sign out</button></form></header>
+<header class="brand-bar"><div class="brand"><span class="brand-mark" aria-hidden="true">H</span>HASOFT <span class="brand-product">Provider access</span></div><div class="brand-actions"><fieldset class="appearance-picker" data-appearance-picker hidden><legend>Appearance</legend></fieldset><form method="post" action="/auth/logout"><button class="btn ghost sm">Sign out</button></form></div></header>
 <section id="relogin-portal" data-selected="{{.Selected}}">
   <header class="card-header"><div><h1 class="card-title">Reconnect an account</h1><p class="card-description">Sign in with your provider to renew the credentials used by the gateway.</p></div></header>
   <div class="portal-list">{{range .Accounts}}
