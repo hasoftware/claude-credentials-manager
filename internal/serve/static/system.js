@@ -18,19 +18,121 @@
     if(caption) p.append(node("p",caption,"system-caption"));
     return p;
   }
-  function list(parent, rows, empty) {
-    if(!rows.length) {parent.append(node("p",empty,"muted"));return;}
-    const l=node("ul",undefined,"system-list");
-    for(const [title,value,problem] of rows) {
-      const r=node("li");r.append(node("strong",title),node("span",value,problem?"problem":undefined));l.append(r);
-    }
-    parent.append(l);
+
+  function badge(label, tone = "neutral") {
+    const chip = node("span", label, "monitor-badge");
+    chip.dataset.tone = tone;
+    return chip;
   }
-  function metric(box,label,value,note,percent) {
-    const c=node("article");
-    c.append(node("span",label),node("strong",value),node("small",note));
-    if(Number.isFinite(percent)) {const m=node("progress");m.max=100;m.value=percent;m.setAttribute("aria-label",label);c.append(m);}
-    box.append(c);
+
+  const stateTones = new Map([
+    ["active", "good"], ["accepted", "good"],
+    ["activating", "warn"], ["deactivating", "warn"], ["maintenance", "warn"],
+    ["reloading", "warn"], ["refreshing", "warn"], ["rate limited", "warn"],
+    ["failed", "bad"], ["inactive", "bad"], ["unreachable", "bad"],
+    ["authorization rejected", "bad"], ["access token expired", "bad"]
+  ]);
+
+  function stateBadge(state) {
+    if (!state) return badge("Unknown");
+    return badge(state[0].toUpperCase() + state.slice(1), stateTones.get(state));
+  }
+
+  function list(parent, rows, empty) {
+    if (!rows.length) {
+      parent.append(node("p", empty, "muted"));
+      return;
+    }
+    const items = node("ul", undefined, "system-list");
+    for (const [title, chip, description] of rows) {
+      const item = node("li");
+      const info = node("div", undefined, "status-detail");
+      info.append(chip);
+      if (description) info.append(node("span", description));
+      item.append(node("strong", title), info);
+      items.append(item);
+    }
+    parent.append(items);
+  }
+
+  function metric(box, label, value, note, percent) {
+    const card = node("article");
+    card.append(node("span", label), node("strong", value));
+    if (typeof note === "string") card.append(node("small", note));
+    else card.append(note);
+    if (Number.isFinite(percent)) {
+      const meter = node("progress");
+      meter.max = 100;
+      meter.value = percent;
+      meter.setAttribute("aria-label", label);
+      card.append(meter);
+    }
+    box.append(card);
+  }
+
+  function readiness(tunnel) {
+    if (tunnel.Ready) return badge("Ready", "good");
+    return tunnel.Edges == null ? badge("Unconfirmed") : badge("Not ready", "bad");
+  }
+
+  function routeIcon(tunnel) {
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("aria-hidden", "true");
+    const path = document.createElementNS(ns, "path");
+    path.setAttribute("d", tunnel
+      ? "M3 20v-8a9 9 0 0 1 18 0v8m-14 0v-8a5 5 0 0 1 10 0v8M10 20v-7h4v7"
+      : "M21 12a9 9 0 1 1-18 0 9 9 0 1 1 18 0ZM3 12h18M12 3c5 5 5 13 0 18-5-5-5-13 0-18Z");
+    svg.append(path);
+    return svg;
+  }
+
+  function routeMap(report) {
+    const panel = section("Tunnel routes", "Hostnames configured on this connector. Readiness is measured at the tunnel.");
+    if (!report.Routes?.length) {
+      panel.append(badge(Array.isArray(report.Routes) ? "No hostname routes configured" : "Route data unavailable"));
+      return panel;
+    }
+    const map = node("div", undefined, "route-map");
+    const hosts = node("ul", undefined, "route-hosts");
+    hosts.setAttribute("aria-label", "Configured hostnames");
+    for (const route of report.Routes) {
+      const row = node("li");
+      const item = node("div", undefined, "route-node");
+      const text = node("div");
+      const label = node(route.Web ? "a" : "strong", route.Hostname);
+      if (route.Web) {
+        label.href = "https://" + route.Hostname + "/";
+        label.target = "_blank";
+        label.rel = "noopener noreferrer";
+      }
+      text.append(label, node("small", route.Web ? "Web application" : "Configured hostname"));
+      item.append(routeIcon(false), text);
+      row.append(item);
+      hosts.append(row);
+    }
+    const tunnel = node("div", undefined, "route-node route-target");
+    const identity = node("div");
+    identity.append(node("strong", "Cloudflare Tunnel"), node("small", report.Host.Host));
+    const details = node("div", undefined, "route-readiness");
+    details.append(readiness(report.Tunnel));
+    if (report.Tunnel.Edges != null) details.append(node("small", report.Tunnel.Edges + " edge links"));
+    tunnel.append(routeIcon(true), identity, details);
+    map.append(hosts, tunnel);
+    panel.append(map);
+    return panel;
+  }
+
+  function peerRow(peer, available, recent) {
+    let chip;
+    if (peer.Unexpected) chip = badge("Outside trusted networks", "warn");
+    else if (!available) chip = badge("Current state unknown");
+    else chip = peer.Sockets > 0 ? badge("Connected", "good") : badge("Previously seen");
+    const detail = [peer.Gateway];
+    if (available) detail.push(peer.Sockets + " open");
+    if (recent) detail.push("Last seen " + date(peer.LastSeen));
+    return [peer.IP, chip, detail.join(" · ")];
   }
   const size=n=>(n/1073741824).toLocaleString("en",{maximumFractionDigits:2})+" GiB";
   function render(r) {
@@ -38,10 +140,10 @@
     const connections=el("connections");
     const incidents=el("incidents");
     const time=el("monitor-time");
-    if(r.waiting){for(const group of [health,connections,incidents]) group.replaceChildren();time.textContent="Waiting for ccm-monitor to publish its first sample.";return;}
-    const stale=Date.now()-Date.parse(r.At)>90000;
-    time.classList.toggle("stale",stale);
-    time.textContent=(stale?"Monitor data is stale · ":"Last sample · ")+date(r.At)+" ICT · "+r.Host.Host;
+    if(r.waiting){for(const group of [health,connections,incidents]) group.replaceChildren();time.replaceChildren(badge("Waiting for first sample"));return;}
+    const sampledAt = Date.parse(r.At);
+    const stale = !Number.isFinite(sampledAt) || Date.now() - sampledAt > 90000;
+    time.replaceChildren(stale ? badge("Stale sample", "warn") : badge("Latest sample", "good"), " " + date(r.At) + " ICT · " + r.Host.Host);
     const resources=section("System resources",r.Host.Host+" · Linux environment · uptime "+Math.floor(r.Host.Uptime/3600)+"h");
     const meters=node("div",undefined,"system-metrics");
     metric(meters,"CPU",r.Host.CPU==null?"—":r.Host.CPU.toFixed(1)+"%",r.Host.Cores+" visible cores",r.Host.CPU);
@@ -50,33 +152,73 @@
       metric(meters,label,usage?size(usage.Used):"—",usage?"of "+size(usage.Total):"Unavailable",pct);
     }
     resources.append(meters);
-    const services=section("Services","systemd state, listener status and restart count.");
-    list(services,(r.Services||[]).map(s=>[s.Name,s.State+" · "+s.Detail+" · "+s.Restarts+" restarts"+(s.Since?" · "+s.Since:""),s.State!=="active"]),"No service data.");
-    const tunnel=section("Cloudflare Tunnel","Each cloudflared process is one connector. Each connector can maintain several edge connections.");
-    const inventory=r.Cloud.State==="reported";
-    const cloudMeters=node("div",undefined,"system-metrics");
-    metric(cloudMeters,"Local connector",r.Tunnel.Ready?"1":"—",r.Tunnel.Ready?"Ready":"Readiness unconfirmed");
-    metric(cloudMeters,"Local edge links",r.Tunnel.Edges??"—","From cloudflared /ready");
-    metric(cloudMeters,"Tunnel-wide connectors",inventory?(r.Cloud.Connectors||[]).length:"—",inventory?"Cloudflare · "+date(r.Cloud.At):r.Cloud.State==="not configured"?"Configure read access in Settings":"API unavailable");
+
+    const services = section("Services", "systemd state, listener status and restart count.");
+    list(services, (r.Services || []).map(s => [
+      s.Name, stateBadge(s.State), [s.Detail, s.Restarts + " restarts", s.Since].filter(Boolean).join(" · ")
+    ]), "No service data.");
+
+    const tunnel = section("Tunnel connectors", "Each cloudflared process is one connector. A connector can maintain several edge connections.");
+    const inventory = r.Cloud.State === "reported";
+    const connectors = r.Cloud.Connectors || [];
+    const cloudMeters = node("div", undefined, "system-metrics");
+    metric(cloudMeters, "Local connector", r.Tunnel.Ready ? "1" : "—", readiness(r.Tunnel));
+    metric(cloudMeters, "Local edge links", r.Tunnel.Edges ?? "—", "From cloudflared /ready");
+    let inventoryBadge;
+    if (inventory) {
+      if (!connectors.length) inventoryBadge = badge("No active connectors", "bad");
+      else if (connectors.some(c => !c.Known)) inventoryBadge = badge("Unrecognized connector", "warn");
+      else inventoryBadge = badge("Recognized", "good");
+    } else if (r.Cloud.State === "not configured") inventoryBadge = badge("Not configured");
+    else inventoryBadge = badge("Inventory unavailable", "warn");
+    metric(cloudMeters, "Tunnel-wide connectors", inventory ? connectors.length : "—", inventoryBadge);
     tunnel.append(cloudMeters);
-    if(r.Tunnel.ID) tunnel.append(node("p","Local connector ID · "+r.Tunnel.ID,"system-caption"));
-    if(inventory) list(tunnel,(r.Cloud.Connectors||[]).map(c=>[c.ID,(c.Known?"Recognized":"Unrecognized")+" · "+(c.Origins||[]).join(", ")+" · "+c.Edges+" edge links · "+c.Version,!c.Known]),"No active connector reported by Cloudflare.");
-    const clients=section("Gateway clients","Established TCP connections sampled every 15 seconds. One IP can represent several clients behind a proxy or NAT. Brief connections can fall between samples.");
-    const peers=r.Peers||[];
-    const ipCount=new Set(peers.map(p=>p.IP)).size;
-    clients.append(node("p",r.PeersAvailable?ipCount+" distinct source IPs · "+peers.reduce((sum,p)=>sum+p.Sockets,0)+" open connections":"Socket inventory unavailable."));
-    clients.append(node("p","Sessions with recorded usage in the last 15 minutes · "+(r.RecentSessions??"—"),"system-caption"));
-    if(peers.length) list(clients,peers.map(p=>[p.IP,p.Gateway+" · "+p.Sockets+" open"+(p.Unexpected?" · outside trusted networks":""),p.Unexpected]),"");
-    clients.append(node("h3","Recently seen"));
-    list(clients,(r.Recent||[]).map(p=>[p.IP,p.Gateway+" · "+(r.PeersAvailable?p.Sockets+" open":"current count unavailable")+" · last seen "+date(p.LastSeen)+(p.Unexpected?" · outside trusted networks":""),p.Unexpected]),"No sampled peers in the past 24 hours.");
-    const accounts=section("Provider access","Read-only provider checks every five minutes. Last check · "+date(r.AccountsAt)+" ICT");
-    if(!r.AccountsAvailable) accounts.append(node("p","Waiting for a successful account inventory.", "muted"));
-    list(accounts,(r.Accounts||[]).map(a=>[a.Name,a.Provider+" · "+a.State+" · "+date(a.At),a.State!=="accepted"]),"No provider check results.");
-    const history=section("Incident history","Service and tunnel readiness alerts trigger after three consecutive failures. Confirmed provider 401s and unrecognized connector IDs are reported on detection.");
-    list(history,[...(r.Changes||[])].reverse().map(c=>[date(c.At),c.Message]),"No incident transitions recorded.");
-    history.append(node("p","Last Telegram delivery · "+(r.LastDelivery||"No delivery recorded"),"system-caption"));
-    health.replaceChildren(resources,services,accounts);
-    connections.replaceChildren(tunnel,clients);
+    if (r.Cloud.State === "not configured") tunnel.append(node("p", "Configure tunnel inventory access in Settings.", "system-caption"));
+    if (r.Tunnel.ID) tunnel.append(node("p", "Local connector ID · " + r.Tunnel.ID, "system-caption"));
+    if (inventory) {
+      tunnel.append(node("p", "Cloudflare inventory · " + date(r.Cloud.At), "system-caption"));
+      list(tunnel, connectors.map(c => [
+        c.ID, c.Known ? badge("Recognized", "good") : badge("Unrecognized", "warn"),
+        [...(c.Origins || []), c.Edges + " edge links", c.Version].filter(Boolean).join(" · ")
+      ]), "No active connector reported by Cloudflare.");
+    }
+
+    const clients = section("Gateway clients", "Established TCP connections sampled every 15 seconds. One IP can represent several clients behind a proxy or NAT. Brief connections can fall between samples.");
+    const peers = r.Peers || [];
+    if (r.PeersAvailable) {
+      const ipCount = new Set(peers.map(p => p.IP)).size;
+      clients.append(node("p", ipCount + " distinct source IPs · " + peers.reduce((sum,p) => sum+p.Sockets,0) + " open connections"));
+    } else clients.append(badge("Socket inventory unavailable", "warn"));
+    clients.append(node("p", "Sessions with recorded usage in the last 15 minutes · " + (r.RecentSessions ?? "—"), "system-caption"));
+    if (peers.length) list(clients, peers.map(p => peerRow(p, r.PeersAvailable, false)), "");
+    clients.append(node("h3", "Recently seen"));
+    list(clients, (r.Recent || []).map(p => peerRow(p, r.PeersAvailable, true)), "No sampled peers in the past 24 hours.");
+
+    const accounts = section("Provider access", "Read-only provider checks every five minutes. Last check · " + date(r.AccountsAt) + " ICT");
+    if (!r.AccountsAvailable) accounts.append(badge("Waiting for account inventory"));
+    list(accounts, (r.Accounts || []).map(a => [
+      a.Name, r.AccountsAvailable ? stateBadge(a.State) : badge("Last known · " + a.State),
+      a.Provider + " · " + date(a.At)
+    ]), "No provider check results.");
+
+    const history = section("Incident history", "Service and tunnel readiness alerts trigger after three consecutive failures. Confirmed provider 401s and unrecognized connector IDs are reported on detection.");
+    list(history, [...(r.Changes || [])].reverse().map(c => {
+      const recovered = c.Message.endsWith(" · recovered");
+      return [date(c.At), recovered ? badge("Recovered", "good") : badge("Alert", "warn"),
+        recovered ? c.Message.slice(0, -" · recovered".length) : c.Message];
+    }), "No incident transitions recorded.");
+    const delivery = node("p", "Last Telegram delivery · ", "system-caption");
+    if (r.LastDelivery) {
+      const [state, at] = r.LastDelivery.split(" · ");
+      delivery.append(badge(state, {Delivered: "good", Failed: "bad"}[state]), at ? " " + date(at) : "");
+    } else delivery.append(badge("No delivery recorded"));
+    history.append(delivery);
+    health.replaceChildren(resources, services, accounts);
+    const focusedRoute = connections.contains(document.activeElement) ? document.activeElement.href : null;
+    connections.replaceChildren(routeMap(r), tunnel, clients);
+    if (focusedRoute) {
+      Array.from(connections.querySelectorAll(".route-node a")).find(a => a.href === focusedRoute)?.focus({preventScroll: true});
+    }
     incidents.replaceChildren(history);
   }
   async function api(url,body) {
@@ -89,7 +231,7 @@
   let busy=false;
   async function refresh(){
     if(busy||document.hidden)return;busy=true;
-    try{render(await api("/api/system"));}catch{el("monitor-time").textContent="Status unavailable. Retrying…";el("monitor-time").classList.add("stale");}finally{busy=false;}
+    try{render(await api("/api/system"));}catch{el("monitor-time").replaceChildren(badge("Status unavailable", "warn"), " Retrying…");}finally{busy=false;}
   }
   const field=k=>form.elements.namedItem(k);
   let loaded=false;

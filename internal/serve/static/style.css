@@ -231,8 +231,50 @@ dialog::backdrop {background:#18171570}
 .system-metrics progress {display:block;width:100%;height:5px;margin-top:8px;accent-color:var(--coral-active)}
 .system-list {list-style:none;margin:0;padding:0}
 .system-list li {display:grid;grid-template-columns:minmax(120px,1.1fr) minmax(150px,2fr);gap:16px;padding:10px 0;border-top:1px solid var(--line);overflow-wrap:anywhere;align-items:baseline}
-.system-list .problem {color:var(--error-ink);font-weight:600}
-#monitor-time.stale {color:var(--error-ink)}
+.monitor-badge {display:inline-flex;align-items:center;gap:6px;max-width:100%;width:fit-content;padding:3px 9px;border-radius:99px;background:var(--card-paper);color:var(--body);font-size:12px;line-height:1.5;font-weight:600;vertical-align:middle}
+.monitor-badge::before {content:"";flex:none;width:7px;height:7px;border-radius:50%;background:currentColor}
+.monitor-badge[data-tone="good"] {color:var(--success-ink);background:var(--success-bg)}
+.monitor-badge[data-tone="warn"] {color:var(--warning-ink);background:var(--warning-bg)}
+.monitor-badge[data-tone="bad"] {color:var(--error-ink);background:var(--error-bg)}
+.status-detail,.route-readiness {display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px}
+.status-detail > span:not(.monitor-badge) {color:var(--muted-ink);font-size:13px}
+.report-panel:has(>.route-map) {container-type:inline-size}
+.route-map {
+  --bridge:clamp(44px,7vw,104px);--branch-gap:12px;
+  --wire:light-dark(#a2b1bf,#657482);--route-ink:light-dark(#285d80,#9ecfe9);
+  display:grid;grid-template-columns:minmax(0,1.35fr) var(--bridge) minmax(0,1fr);align-items:center;
+  padding:clamp(18px,4vw,48px);border:1px solid var(--line);border-radius:12px;
+  background-color:var(--paper);background-image:radial-gradient(light-dark(#d8d1c5,#393c35) 1px,transparent 1px);background-size:12px 12px;
+}
+.route-hosts {grid-column:1;list-style:none;margin:0;padding:0;display:grid;gap:var(--branch-gap)}
+.route-hosts li,.route-target {position:relative;min-width:0}
+.route-hosts li::after,.route-target::before {content:"";position:absolute;top:50%;width:calc(var(--bridge) / 2);border-top:2px solid var(--wire)}
+.route-hosts li::after {left:100%}
+.route-hosts li::before {content:"";position:absolute;left:calc(100% + var(--bridge) / 2);top:0;bottom:calc(-1 * var(--branch-gap));border-left:2px solid var(--wire)}
+.route-hosts li:first-child::before {top:50%}
+.route-hosts li:last-child::before {bottom:calc(50% - 2px)}
+.route-hosts li:only-child::before {display:none}
+.route-node {display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 12px;align-items:center;background:var(--canvas);border:1px solid var(--control-line);border-radius:12px;padding:12px 16px;overflow-wrap:anywhere}
+.route-node svg {width:23px;height:23px;color:var(--route-ink);fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}
+.route-node a,.route-node strong {font-weight:600;color:var(--ink)}
+.route-node a {color:var(--route-ink)}
+.route-node small {display:block;color:var(--muted-ink);font-size:12px}
+.route-target {grid-column:3}
+.route-target::before {right:100%}
+.route-target svg {color:var(--body)}
+.route-readiness {grid-column:2}
+@container(max-width:590px) {
+  .route-map {display:block;padding:16px;--branch-gap:10px}
+  .route-hosts {margin-left:5px;padding-left:20px}
+  .route-hosts li::after {left:-20px;width:20px}
+  .route-hosts li::before {display:block;left:-20px;bottom:calc(-1 * var(--branch-gap))}
+  .route-hosts li:last-child::before {bottom:-14px}
+  .route-target {margin:14px 0 0 25px}
+  .route-target::before {width:20px;left:-21px;right:auto;top:-15px;height:calc(50% + 15px);border:0;border-left:2px solid var(--wire);border-bottom:2px solid var(--wire);border-bottom-left-radius:7px}
+  .route-node {padding:10px;gap:5px 8px}
+}
+@container(max-width:325px){.route-map {padding:12px 6px}.route-node {padding:10px 6px;gap:4px 6px}.route-node svg {width:18px;height:18px}}
+@media(forced-colors:active){.monitor-badge {border:1px solid currentColor}.route-map {--wire:CanvasText}}
 #monitor-form {max-width:68ch} #monitor-form fieldset {min-width:0;border:0;border-top:1px solid var(--line);margin:20px 0;padding:8px 0}
 #monitor-form legend {font-size:16px;font-weight:600;padding-right:10px}
 #monitor-form label {display:block;margin:9px 0} #monitor-form .input {margin-top:3px}

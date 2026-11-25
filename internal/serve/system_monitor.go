@@ -31,6 +31,7 @@ type monitorReport struct {
 	Host              hostUsage
 	Services          []serviceCheck
 	Tunnel            tunnelLocal
+	Routes            []tunnelRoute
 	Cloud             cloudView
 	Peers             []peer
 	PeersAvailable    bool
@@ -255,6 +256,7 @@ func RunSystemMonitor(ctx context.Context) error {
 			r.observe(sc.Name, sc.State != "active", sc.State+" / "+sc.Detail, r.At, 3)
 		}
 		r.Tunnel = tunnelProbe(ctx)
+		r.Routes = localTunnelRoutes(ctx)
 		r.observe("Local tunnel readiness", !r.Tunnel.Ready, "no ready connection confirmed", r.At, 3)
 		if time.Since(cloudAt) >= time.Minute || s.CloudToken != prior.CloudToken || s.AccountID != prior.AccountID || s.TunnelID != prior.TunnelID || strings.Join(s.TrustedConnectors, ",") != strings.Join(prior.TrustedConnectors, ",") {
 			r.Cloud = cloudInventory(ctx, s, r.Tunnel.ID)

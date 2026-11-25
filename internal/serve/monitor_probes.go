@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/netip"
 	"os"
 	"os/exec"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -35,6 +37,57 @@ type tunnelLocal struct {
 	Edges *int
 	Ready bool
 }
+
+type tunnelRoute struct {
+	Hostname string
+	Web      bool // An HTTP(S) ingress rule matches the hostname without a path constraint.
+}
+
+var routeHostname = regexp.MustCompile(`^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`)
+
+func localTunnelRoutes(ctx context.Context) []tunnelRoute {
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, "http://127.0.0.1:20241/config", nil)
+	resp, err := localProbeClient.Do(req)
+	if err != nil {
+		return nil
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil
+	}
+	return parseTunnelRoutes(resp.Body)
+}
+
+// Only publish distinct configured hostnames. The local config may contain sensitive origin settings.
+func parseTunnelRoutes(body io.Reader) []tunnelRoute {
+	var snapshot struct {
+		Config struct {
+			Ingress []struct{ Hostname, Path, Service string }
+		}
+	}
+	const maxConfigBytes = 2 << 20
+	raw, err := io.ReadAll(io.LimitReader(body, maxConfigBytes+1))
+	if err != nil || len(raw) > maxConfigBytes || json.Unmarshal(raw, &snapshot) != nil || snapshot.Config.Ingress == nil {
+		return nil
+	}
+	routes := make([]tunnelRoute, 0)
+	index := make(map[string]int)
+	for _, rule := range snapshot.Config.Ingress {
+		host := strings.ToLower(strings.TrimSuffix(rule.Hostname, "."))
+		if len(host) > 253 || !routeHostname.MatchString(host) {
+			continue
+		}
+		web := rule.Path == "" && !strings.HasPrefix(host, "*.") && (strings.HasPrefix(rule.Service, "https://") || strings.HasPrefix(rule.Service, "http://"))
+		if i, exists := index[host]; exists {
+			routes[i].Web = routes[i].Web || web
+			continue
+		}
+		index[host] = len(routes)
+		routes = append(routes, tunnelRoute{Hostname: host, Web: web})
+	}
+	return routes
+}
+
 type peer struct {
 	IP, Gateway string
 	Sockets     int

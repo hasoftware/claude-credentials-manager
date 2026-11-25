@@ -130,3 +130,29 @@ func TestRecentUsageSessions(t *testing.T) {
 		t.Fatalf("recent sessions = %v", count)
 	}
 }
+
+func TestRouteMapPublishesOnlyHostnames(t *testing.T) {
+	routes := parseTunnelRoutes(strings.NewReader(`{"config":{"ingress":[
+		{"hostname":"CCM.example.com","path":"/docs","service":"http://private:8787"},
+		{"hostname":"ccm.example.com.","service":"https://private:443","originRequest":{"httpHostHeader":"secret"}},
+		{"hostname":"*.example.com","service":"https://private:443"},
+		{"hostname":"ssh.example.com","service":"ssh://private:22"},
+		{"hostname":"docs.example.com","path":"/docs","service":"http://private"},
+		{"hostname":"user@invalid.test","service":"http://private"},
+		{"service":"http_status:404"}]}}`))
+	if len(routes) != 4 || routes[0] != (tunnelRoute{"ccm.example.com", true}) || routes[1].Web || routes[2].Web || routes[3].Web {
+		t.Fatalf("routes = %+v", routes)
+	}
+	encoded, err := json.Marshal(routes)
+	if err != nil || strings.Contains(string(encoded), "private") || strings.Contains(string(encoded), "secret") {
+		t.Fatal("origin settings exposed")
+	}
+	if routes := parseTunnelRoutes(strings.NewReader(`{"config":{"ingress":[]}}`)); routes == nil || len(routes) != 0 {
+		t.Fatal("empty inventory must be distinguishable from unavailable")
+	}
+	for _, invalid := range []string{"{}", "{", strings.Repeat(" ", (2<<20)+1)} {
+		if parseTunnelRoutes(strings.NewReader(invalid)) != nil {
+			t.Fatal("malformed or oversized inventory must be unavailable")
+		}
+	}
+}
