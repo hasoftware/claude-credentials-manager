@@ -203,12 +203,34 @@
     return keys;
   }
 
+  var configGroups = [
+    {name:"Account access", keys:["relogin","refresh","usage"]},
+    {name:"Sharing", keys:["ticket","start-lan","start-tunnel","stop"]}
+  ];
+  var commandIcons = {
+    relogin: '<path d="M10 5H5v14h5m-1-7h12m-4-4 4 4-4 4"/>',
+    refresh: '<path d="M19 10a7 7 0 1 0-1 7m2-12v6h-6"/>',
+    usage: '<path d="M4 4v16h16M8 15v-3m5 3V7m5 8v-5"/>',
+    ticket: '<path d="M3 6h18v4a2 2 0 0 0 0 4v4H3v-4a2 2 0 0 0 0-4zm13 2v2m0 4v2"/>',
+    "start-lan": '<path d="M9 3h6v5H9zm3 5v4m-7 4v-4h14v4M2 16h6v5H2zm14 0h6v5h-6z"/>',
+    "start-tunnel": '<path d="M7 18a5 5 0 0 1-1-10 7 7 0 0 1 13 2 4 4 0 0 1-1 8m-6 3V11m-4 4 4-4 4 4"/>',
+    stop: '<rect x="5" y="5" width="14" height="14" rx="2"/>'
+  };
+
+  function commandButton(key) {
+    var info = actionInfo[key];
+    return '<button type="button" class="config-option" data-command="' + key + '">' +
+      '<svg class="command-icon" viewBox="0 0 24 24" aria-hidden="true">' + commandIcons[key] + '</svg>' +
+      '<span><strong>' + info[0] + '</strong><small>' + info[1] + '</small></span>' +
+      '<span class="config-arrow" aria-hidden="true">&rsaquo;</span></button>';
+  }
+
   function configOptions(keys) {
-    return keys.map(function (key) {
-      var info = actionInfo[key];
-      return '<button type="button" class="config-option" data-command="' + key + '">' +
-        '<span><strong>' + info[0] + '</strong><small>' + info[1] + '</small></span>' +
-        '<span class="config-arrow" aria-hidden="true">›</span></button>';
+    return configGroups.map(function (group) {
+      var commands = group.keys.filter(key => keys.includes(key));
+      if (!commands.length) return "";
+      return '<fieldset class="command-group"><legend>' + group.name + '</legend>' +
+        commands.map(commandButton).join("") + '</fieldset>';
     }).join("");
   }
 
@@ -220,12 +242,13 @@
     if (!cred) return;
     var keys = availableActions(cred);
     var dlg = dialog({
-      title: "Account config",
-      description: (providerNames.get(cred.provider) || cred.provider) + " · " + (cred.name || id),
+      title: cred.name || id,
       body: configOptions(keys),
       footer: [{label:"Close", action:"close"}]
     });
     dlg.classList.add("account-config");
+    dlg.querySelector(".dialog-header").insertAdjacentHTML("afterbegin",
+      '<div class="config-provider">' + providerHTML(cred.provider) + '</div>');
     dlg.setAttribute("aria-label","Account config for " + (cred.name || id));
     var options = dlg.querySelector(".dialog-body");
     syncAccountConfig = function () {

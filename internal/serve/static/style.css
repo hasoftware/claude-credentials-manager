@@ -155,11 +155,22 @@ dialog::backdrop {background:#18171570}
   td.quota-cell::before {display:block;margin-bottom:5px}
 }
 
-.account-config .dialog-body {gap:0;padding-block:8px 16px}
-.config-option {display:flex;align-items:center;justify-content:space-between;gap:16px;text-align:left;width:100%;padding:12px 8px;background:transparent;border:0;border-top:1px solid var(--line);font:inherit;color:var(--ink);cursor:pointer}
-.config-option:first-child {border-top:0}
-.config-option:hover,.config-option:focus-visible {background:var(--paper)}
+.account-config {width:min(460px,calc(100vw - 24px))}
+.account-config .dialog-header {padding-bottom:12px}
+.config-provider {font-size:13px;margin-bottom:6px}
+.config-provider img {width:18px;height:18px}
+.account-config .dialog-title {font-size:clamp(23px,4vw,32px);overflow-wrap:anywhere}
+.account-config .dialog-body {gap:16px;padding-block:6px 16px}
+.command-group {border:0;min-inline-size:0;margin:0;padding:0}
+.command-group legend {padding:0;margin:0 0 5px;color:var(--muted-ink);font-size:12px;font-weight:600}
+.config-option {display:grid;grid-template-columns:19px minmax(0,1fr) 12px;gap:12px;align-items:center;text-align:left;width:100%;min-height:48px;padding:9px 10px;background:transparent;border:1px solid transparent;border-radius:8px;font:inherit;color:var(--ink);cursor:pointer}
+.command-icon {width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round;color:var(--muted-ink)}
 .config-option strong,.config-option small {display:block}
-.config-option small {margin-top:2px;color:var(--muted-ink);font-size:13px}
+.config-option small {color:var(--muted-ink);font-size:13px;line-height:1.35}
 .config-arrow {color:var(--muted-ink);font-size:20px}
+.config-option[data-command="relogin"] {background:#f8ede6;border-color:#e4c7b9}
+.config-option[data-command="relogin"] .command-icon {color:var(--coral-active)}
+.config-option:hover {background:var(--paper);border-color:var(--line)}
+.config-option:focus-visible {outline:2px solid var(--coral-active);outline-offset:1px}
 .config-option[data-command="stop"] strong {color:#8a392b}
+@media(max-height:620px){.account-config .dialog-footer {position:sticky;bottom:0;background:var(--canvas);padding-block:8px}}
