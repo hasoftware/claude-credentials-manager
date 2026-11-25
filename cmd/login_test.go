@@ -15,6 +15,13 @@ import (
 	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
 )
 
+// CLI tests can replace the opener to inspect a URL. The default must never
+// hand a test URL to the developer's desktop browser.
+func TestMain(m *testing.M) {
+	tryOpenBrowserFn = func(string) {}
+	os.Exit(m.Run())
+}
+
 // stubHandshake builds a Handshake with only the exported fields set.
 // The unexported codeVerifier/state fields are empty, which is fine
 // because completeLoginFn is replaced by a seam in every claude test.
