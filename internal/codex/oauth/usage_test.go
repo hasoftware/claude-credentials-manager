@@ -289,3 +289,13 @@ func TestFetchUsage_PlanType_FreePlan_Capitalized(t *testing.T) {
 		t.Fatalf("Tier = %q, want Free", info.Tier)
 	}
 }
+
+func TestFetchUsageWeeklyPrimaryWithZeroUtilization(t *testing.T) {
+	setUsageURL(t, func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"rate_limit":{"primary_window":{"limit_window_seconds":604800,"used_percent":0}}}`))
+	})
+	info := codexoauth.FetchUsage("at", "")
+	if len(info.Quotas) != 1 || info.Quotas[0].Name != "7d" || info.Quotas[0].Used != 0 {
+		t.Fatalf("unexpected quota: %+v", info)
+	}
+}

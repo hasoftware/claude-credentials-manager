@@ -135,3 +135,11 @@ dialog::backdrop {background:#18171570}
 @media(max-width:720px){.report-panels {grid-template-columns:1fr}.token-stats{gap:6px}.token-stats div{padding:12px 8px}.token-stats dt,.token-stats small{font-size:12px}.token-stats dd{font-size:clamp(23px,5.5vw,36px)}.model-list li{grid-template-columns:1.2fr 1fr 1.2fr;font-size:13px}.axis-labels {font-size:9px}}
 
 .portal-list {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,285px),1fr));gap:16px}.portal-list h2{overflow-wrap:anywhere}.provider-label{text-transform:uppercase;letter-spacing:.08em;font-size:12px;color:var(--muted-ink);margin:0 0 12px}
+
+.account-quota {width:clamp(162px,17vw,215px)}
+.account-quota .btn {margin-top:4px}
+.quota-line + .quota-line {margin-top:8px}
+.quota-line div {display:flex;justify-content:space-between;gap:8px;font-size:12px}
+.quota-line small {display:block;color:var(--muted-ink);font-size:11px}
+.quota-line progress {display:block;width:100%;height:5px;margin:3px 0;accent-color:var(--coral-active)}
+@media(max-width:850px){td[data-label="Provider quota"] {align-items:flex-start}.account-quota {width:min(65%,240px)}}

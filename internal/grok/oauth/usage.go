@@ -28,7 +28,7 @@ var FetchUsageFn = FetchUsage
 // grokBillingResponse is the subset of /v1/billing?format=credits ccm reads.
 type grokBillingResponse struct {
 	Config struct {
-		CreditUsagePercent float64 `json:"creditUsagePercent"`
+		CreditUsagePercent *float64 `json:"creditUsagePercent"`
 		CurrentPeriod      struct {
 			Type string `json:"type"`
 			End  string `json:"end"`
@@ -62,13 +62,16 @@ func fetchWeeklyQuota(accessToken string) ([]oauth.Quota, error) {
 	if err := json.Unmarshal(body, &r); err != nil {
 		return nil, fmt.Errorf("parse billing: %w", err)
 	}
+	if r.Config.CreditUsagePercent == nil {
+		return nil, fmt.Errorf("weekly usage was not reported")
+	}
 	resets := r.Config.CurrentPeriod.End
 	if resets == "" {
 		resets = r.Config.BillingPeriodEnd
 	}
 	return []oauth.Quota{{
 		Name:     periodName(r.Config.CurrentPeriod.Type),
-		Used:     r.Config.CreditUsagePercent,
+		Used:     *r.Config.CreditUsagePercent,
 		ResetsAt: resets,
 	}}, nil
 }
@@ -121,4 +124,3 @@ func grokGet(url, accessToken string) ([]byte, error) {
 	}
 	return body, nil
 }
-

@@ -60,9 +60,10 @@ func FetchUsage(accessToken, accountID string) *oauth.UsageInfo {
 }
 
 type codexWindow struct {
-	UsedPercent       float64 `json:"used_percent"`
-	ResetAt           int64   `json:"reset_at"`
-	ResetAfterSeconds int64   `json:"reset_after_seconds"`
+	LimitWindowSeconds int      `json:"limit_window_seconds"`
+	UsedPercent        *float64 `json:"used_percent"`
+	ResetAt            int64    `json:"reset_at"`
+	ResetAfterSeconds  int64    `json:"reset_after_seconds"`
 }
 
 type codexAdditionalRateLimit struct {
@@ -123,8 +124,23 @@ func parseUsageResponse(body []byte) *oauth.UsageInfo {
 }
 
 func windowToQuota(name string, w codexWindow) *oauth.Quota {
-	if w.UsedPercent == 0 && w.ResetAt == 0 && w.ResetAfterSeconds == 0 {
+	if w.UsedPercent == nil {
 		return nil
+	}
+	// Some plans return a weekly primary window. Prefer the reported duration.
+	if w.LimitWindowSeconds > 0 {
+		_, model, perModel := strings.Cut(name, "/")
+		switch w.LimitWindowSeconds {
+		case 5 * 3600:
+			name = "5h"
+		case 7 * 24 * 3600:
+			name = "7d"
+		default:
+			name = (time.Duration(w.LimitWindowSeconds) * time.Second).String()
+		}
+		if perModel {
+			name += "/" + model
+		}
 	}
 	var resetsAt string
 	if w.ResetAt > 0 {
@@ -132,5 +148,5 @@ func windowToQuota(name string, w codexWindow) *oauth.Quota {
 	} else if w.ResetAfterSeconds > 0 {
 		resetsAt = time.Now().Add(time.Duration(w.ResetAfterSeconds) * time.Second).UTC().Format(time.RFC3339)
 	}
-	return &oauth.Quota{Name: name, Used: w.UsedPercent, ResetsAt: resetsAt}
+	return &oauth.Quota{Name: name, Used: *w.UsedPercent, ResetsAt: resetsAt}
 }

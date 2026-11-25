@@ -66,12 +66,68 @@
           '<th>Tier</th>' +
           '<th>Token expiry</th>' +
           '<th>Dashboard share</th>' +
-          '<th>Usage</th>' +
+          '<th>Provider quota</th>' +
           '<th class="actions">Actions</th>' +
         '</tr></thead>' +
         '<tbody>' + rows + '</tbody>' +
       '</table>';
     bindRowActions(creds);
+  }
+
+  var quotaCache = new Map();
+  var quotaPending = 0;
+  var resetTime = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Ho_Chi_Minh", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
+  });
+
+  function quotaLine(label, window) {
+    var value = window && Number.isFinite(window.used) ? window.used : null;
+    var percent = value === null ? "Not reported" : value.toLocaleString("en", { maximumFractionDigits: 1 }) + "% used";
+    var html = '<div class="quota-line"><div><b>' + label + '</b><span>' + percent + '</span></div>';
+    if (value !== null) {
+      var reset = Date.parse(window.resetsAt);
+      html += '<progress max="100" value="' + Math.max(0, Math.min(100, value)) + '" aria-label="' + label + ' quota used"></progress>';
+      if (Number.isFinite(reset)) html += '<small>Resets ' + resetTime.format(reset) + ' ICT</small>';
+    }
+    return html + '</div>';
+  }
+
+  function quotaSummary(cred) {
+    if (cred.credStatus === "expired") return '<small>Token expired</small>';
+    var q = quotaCache.get(cred.id)?.quota;
+    if (!q) return '<small>Loading quota…</small>';
+    if (!q.fetched || q.error) return '<small class="quota-error">Quota unavailable</small>';
+    var windows = q.windows || [];
+    return quotaLine("5 hours", windows.find(w => w.name === "5h")) +
+      quotaLine("Weekly", windows.find(w => w.name === "7d" || w.name === "weekly"));
+  }
+
+  function fetchAccountQuota(id) {
+    return fetch("/api/credentials/" + encodeURIComponent(id), {headers:{Accept:"application/json"}, cache:"no-store"})
+      .then(function (resp) {
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        return resp.json();
+      }).then(function (detail) { return detail.quota; });
+  }
+
+  function updateAccountQuotas(creds) {
+    var valid = new Set(creds.filter(c => c.credStatus !== "expired").map(c => c.id));
+    for (var id of quotaCache.keys()) if (!valid.has(id)) quotaCache.delete(id);
+    creds.forEach(function (cred) {
+      var previous = quotaCache.get(cred.id);
+      if (!valid.has(cred.id) || quotaPending >= 3 || (previous && Date.now() < previous.next)) return;
+      var entry = {next:Infinity, quota:previous?.quota};
+      quotaCache.set(cred.id,entry);
+      quotaPending++;
+      fetchAccountQuota(cred.id).catch(function () { return {fetched:false}; }).then(function (quota) {
+        quotaPending--;
+        if (quotaCache.get(cred.id) !== entry) return;
+        entry.quota = quota;
+        entry.next = Date.now() + (quota?.fetched && !quota.error ? 300000 : 60000);
+        var cell = document.getElementById("quota-" + cred.id);
+        if (cell) cell.innerHTML = quotaSummary(cred);
+      });
+    });
   }
 
   function rowHTML(c) {
@@ -90,8 +146,8 @@
     }
     var usageBtn =
       c.credStatus === "expired"
-        ? '<button class="btn sm ghost" disabled>View usage</button>'
-        : '<button class="btn sm ghost" data-action="usage" data-id="' + attr(c.id) + '">View usage</button>';
+        ? '<button class="btn sm ghost" disabled>Details</button>'
+        : '<button class="btn sm ghost" data-action="usage" data-id="' + attr(c.id) + '">Details</button>';
     var actionBtns = actionButtonsHTML(c);
     return (
       '<tr data-id="' + attr(c.id) + '">' +
@@ -99,7 +155,7 @@
         '<td class="tier" data-label="Tier">' + tier + '</td>' +
         '<td data-label="Token expiry">' + credBadge + '</td>' +
         '<td data-label="Dashboard share">' + sessionCell + '</td>' +
-        '<td data-label="Usage">' + usageBtn + '</td>' +
+        '<td data-label="Provider quota"><div class="account-quota"><div id="quota-' + attr(c.id) + '">' + quotaSummary(c) + '</div>' + usageBtn + '</div></td>' +
         '<td class="actions">' + actionBtns + '</td>' +
       '</tr>'
     );
@@ -166,6 +222,7 @@
       .then(function (body) {
         lastCredentials = body.credentials || [];
         renderTable(lastCredentials);
+        updateAccountQuotas(lastCredentials);
         document.getElementById("reconnect").classList.remove("shown");
         document.getElementById("last-updated").textContent =
           "updated " + new Date().toLocaleTimeString();
@@ -216,6 +273,7 @@
     }
     postJSON("/api/credentials/" + encodeURIComponent(cred.id) + "/refresh", null)
       .then(function () {
+        quotaCache.delete(cred.id);
         toast("Refreshed", "Tokens for " + (cred.name || cred.id) + " renewed.", "success");
         pollOnce();
       })
@@ -377,6 +435,7 @@
           dlg.close();
           var name = (resp && resp.credential && (resp.credential.name || resp.credential.id)) || "new credential";
           toast("Logged in", "Logged in as " + name + ".", "success");
+          if (resp?.credential?.id) quotaCache.delete(resp.credential.id);
           if (portal) {
             window.history.replaceState(null,"","/");
             var account = resp && resp.credential;
@@ -469,6 +528,7 @@
           dlg.close();
           var name = (resp && resp.credential && (resp.credential.name || resp.credential.id)) || "new credential";
           toast("Logged in", "Logged in as " + name + ".", "success");
+          if (resp?.credential?.id) quotaCache.delete(resp.credential.id);
           if (portal) {
             window.history.replaceState(null,"","/");
             var account = resp && resp.credential;
@@ -534,38 +594,37 @@
   function openUsageDialog(cred) {
     var dlg = dialog({
       title: "Usage · " + (cred.name || cred.id),
-      description: "Live quota fetched from Claude.",
+      description: "Live quota reported by the account provider.",
       body: '<p class="muted">Loading…</p>',
       footer: [{ label: "Close", ghost: true, action: "close" }],
     });
     dlg.addEventListener("close", function () { dlg.remove(); });
 
-    fetch("/api/credentials/" + encodeURIComponent(cred.id), {
-      headers: { Accept: "application/json" },
-    })
-      .then(function (resp) {
-        if (!resp.ok) { return resp.json().then(function (b) { throw new Error((b && b.error) || "HTTP " + resp.status); }); }
-        return resp.json();
-      })
-      .then(function (detail) {
+    fetchAccountQuota(cred.id)
+      .then(function (quota) {
+        if (quota && lastCredentials?.some(c => c.id === cred.id && c.credStatus !== "expired")) {
+          quotaCache.set(cred.id,{quota:quota,next:Date.now() + (quota.fetched && !quota.error ? 300000 : 60000)});
+          var cell=document.getElementById("quota-" + cred.id);
+          if (cell) cell.innerHTML=quotaSummary(cred);
+        }
         var bodyEl = dlg.querySelector(".dialog-body");
         bodyEl.innerHTML = "";
-        if (!detail.quota || !detail.quota.fetched) {
+        if (!quota || !quota.fetched) {
           bodyEl.appendChild(renderNote("Quota was not fetched — credential is expired or offline."));
           return;
         }
-        if (detail.quota.error) {
+        if (quota.error) {
           var err = document.createElement("div");
           err.className = "quota-error";
-          err.textContent = "Fetch failed: " + detail.quota.error;
+          err.textContent = "Fetch failed: " + quota.error;
           bodyEl.appendChild(err);
           return;
         }
-        if (!detail.quota.windows || detail.quota.windows.length === 0) {
+        if (!quota.windows || quota.windows.length === 0) {
           bodyEl.appendChild(renderNote("Upstream returned no quota windows."));
           return;
         }
-        detail.quota.windows.forEach(function (w) {
+        quota.windows.forEach(function (w) {
           var row = document.createElement("div");
           row.className = "quota-row";
           var used = Math.max(0, Math.min(100, w.used));
