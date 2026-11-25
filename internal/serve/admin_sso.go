@@ -30,6 +30,7 @@ type AdminSSO struct {
 }
 type loginCookie struct {
 	State, Nonce, Verifier string
+	ReturnPath             string `json:",omitempty"`
 	Account                string `json:",omitempty"`
 	Subject                string
 	Expiry                 int64
@@ -127,6 +128,10 @@ func (s *AdminSSO) start(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/" && len(r.URL.Query().Get("account")) <= 256 {
 		a.Account = r.URL.Query().Get("account")
 	}
+	switch strings.TrimSuffix(r.URL.Path, "/") {
+	case "/accounts", "/tutorial":
+		a.ReturnPath = strings.TrimSuffix(r.URL.Path, "/")
+	}
 	s.set(w, flowName, a)
 	http.Redirect(w, r, s.oauth.AuthCodeURL(a.State, oidc.Nonce(a.Nonce), oauth2.S256ChallengeOption(a.Verifier)), http.StatusFound)
 }
@@ -164,6 +169,9 @@ func (s *AdminSSO) callback(w http.ResponseWriter, r *http.Request) {
 	}
 	s.set(w, sessionName, loginCookie{Subject: id.Subject, Expiry: expiry.Unix()})
 	target := "/"
+	if a.ReturnPath == "/accounts" || a.ReturnPath == "/tutorial" {
+		target = a.ReturnPath
+	}
 	if a.Account != "" {
 		target += "?" + url.Values{"account": {a.Account}}.Encode()
 	}

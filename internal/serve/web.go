@@ -404,8 +404,15 @@ func (h *handler) loginPOST(w http.ResponseWriter, r *http.Request) {
 // appShell serves the SPA shell HTML. All dynamic data is fetched
 // via /api/credentials on boot; the shell is cacheable and contains
 // nothing user-specific.
-func (h *handler) appShell(w http.ResponseWriter, _ *http.Request) {
-	_ = h.pages.app.ExecuteTemplate(w, "layout", templateData{Title: "Accounts", SSO: h.cfg.SSO})
+func (h *handler) appShell(w http.ResponseWriter, r *http.Request) {
+	title := "Dashboard"
+	switch strings.TrimSuffix(r.URL.Path, "/") {
+	case "/accounts":
+		title = "Accounts"
+	case "/tutorial":
+		title = "Tutorial"
+	}
+	_ = h.pages.app.ExecuteTemplate(w, "layout", templateData{Title: title, SSO: h.cfg.SSO})
 }
 
 // ---- JSON API ----------------------------------------------------

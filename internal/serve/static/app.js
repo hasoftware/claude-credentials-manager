@@ -28,7 +28,7 @@
     appRoot.innerHTML = [
       '<div class="card">',
       '  <header class="card-header"><div>',
-      '    <h2 class="card-title" id="accounts">Accounts</h2>',
+      '    <h1 class="card-title" id="accounts">Accounts</h1>',
       '    <p class="card-description">Manage gateway accounts and renew provider access.</p>',
       '  </div><button class="btn primary" id="add-credential-btn" type="button">' + ICON_PLUS + ' Add credential</button></header>',
       '  <dl class="metrics" aria-label="Account overview">',

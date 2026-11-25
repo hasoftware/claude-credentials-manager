@@ -3,9 +3,16 @@
   <div class="brand"><span class="brand-mark" aria-hidden="true">H</span><span>HASOFT</span><span class="brand-product">CCM2</span></div>
   {{if .SSO}}<form action="/auth/logout" method="post"><button class="btn ghost sm" type="submit">Sign out</button></form>{{end}}
 </header>
+<nav class="panel-nav" aria-label="CCM2">
+  <a href="/" {{if eq .Title "Dashboard"}}aria-current="page"{{end}}>Dashboard</a>
+  <a href="/accounts" {{if eq .Title "Accounts"}}aria-current="page"{{end}}>Accounts</a>
+  <a href="/tutorial" {{if eq .Title "Tutorial"}}aria-current="page"{{end}}>Tutorial</a>
+</nav>
+{{if eq .Title "Dashboard"}}
+<script>if (location.hash === "#accounts" || location.hash === "#tutorial") location.replace("/" + location.hash.slice(1));</script>
 <section id="usage" aria-labelledby="usage-title">
   <header class="card-header report-head"><div><h1 class="card-title" id="usage-title">Gateway overview</h1><p class="card-description">Token activity across your gateway accounts.</p></div>
-    <a class="btn" href="#accounts">Manage accounts ↓</a></header>
+  </header>
   <div class="report-controls"><label>Reporting month <input type="month" id="report-month" required></label><span>Vietnam time · UTC+7</span></div>
   <dl class="token-stats">
     <div><dt>Tokens today</dt><dd id="usage-today">—</dd><small id="usage-today-note"></small></div>
@@ -19,7 +26,25 @@
   </div>
   <section class="report-panel model-panel"><h2>Usage by model</h2><div id="model-usage"></div></section>
 </section>
-<div id="app"></div>
 <script src="/static/usage.js" defer></script>
+{{else if eq .Title "Accounts"}}
+<div id="app"></div>
 <script src="/static/app.js" defer></script>
+{{else}}
+<article class="tutorial" lang="vi">
+  <header class="card-header"><div><h1 class="card-title">Tutorial</h1><p class="card-description">Hướng dẫn quản lý tài khoản và theo dõi gateway CCM2.</p></div></header>
+  <section><h2>Thêm tài khoản</h2>
+    <ol><li>Mở <a href="/accounts">Accounts</a> và chọn <strong>Add credential</strong>.</li>
+    <li>Chọn Claude, Codex hoặc Grok rồi nhấn <strong>Continue</strong>. Đăng nhập tại trang ủy quyền của nhà cung cấp.</li>
+    <li>Với Claude, dán mã ủy quyền vào CCM2. Với Codex hoặc Grok, sao chép toàn bộ URL localhost từ thanh địa chỉ, dán vào ô <strong>Paste redirect URL</strong> và nhấn <strong>Submit</strong>.</li></ol></section>
+  <section><h2>Đăng nhập lại khi token bị thu hồi</h2>
+    <p>Khi thấy lỗi <code>401 token_revoked</code>, mở <a href="/accounts">Accounts</a>, chọn <strong>Config → Relogin</strong> trên đúng tài khoản Codex hoặc Grok. Bạn cũng có thể mở cổng SSO từ PowerShell bằng một trong hai lệnh sau.</p>
+    <pre><code>ccm2 relogin --web codex
+ccm2 relogin --web grok</code></pre>
+    <p>Đăng nhập HASOFT, mở liên kết ủy quyền rồi dán URL trả về vào cùng hộp thoại. Trang localhost có thể không tải được, nhưng URL trên thanh địa chỉ vẫn dùng được.</p></section>
+  <section><h2>Xem quota và lượng token</h2>
+    <p>Trong <a href="/accounts">Accounts</a>, hai cột <strong>5 hours</strong> và <strong>Weekly</strong> hiển thị phần trăm hạn mức đã dùng. <strong>Not reported</strong> nghĩa là nhà cung cấp chưa trả số liệu cho kỳ đó. Chọn <strong>Config → Quota details</strong> để xem các kỳ mà nhà cung cấp báo về.</p>
+    <p>Mở <a href="/">Dashboard</a> để xem số token gateway đã ghi nhận hôm nay, chọn tháng báo cáo hoặc bấm vào một ngày trên biểu đồ để xem số chính xác. Các ngày tính theo giờ Việt Nam (UTC+7).</p></section>
+</article>
+{{end}}
 {{end}}

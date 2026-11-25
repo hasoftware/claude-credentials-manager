@@ -174,3 +174,16 @@ dialog::backdrop {background:#18171570}
 .config-option:focus-visible {outline:2px solid var(--coral-active);outline-offset:1px}
 .config-option[data-command="stop"] strong {color:#8a392b}
 @media(max-height:620px){.account-config .dialog-footer {position:sticky;bottom:0;background:var(--canvas);padding-block:8px}}
+
+.panel-nav {display:flex;align-items:stretch;gap:clamp(12px,3vw,32px);border-bottom:1px solid var(--line)}
+.panel-nav a {padding:12px 3px 10px;border-bottom:3px solid transparent;text-decoration:none;font-weight:550;color:var(--muted-ink)}
+.panel-nav a[aria-current="page"] {color:var(--ink);border-color:var(--coral-active)}
+.panel-nav a:hover {color:var(--ink)}
+.panel-nav ~ section .card-header,.panel-nav ~ #app .card-header,.tutorial .card-header {padding-top:clamp(24px,4vw,48px)}
+.tutorial {max-width:76ch}
+.tutorial section {border-top:1px solid var(--line);padding:22px 0}
+.tutorial h2 {font-size:clamp(20px,3vw,25px)}
+.tutorial p,.tutorial li {line-height:1.7}
+.tutorial ol {padding-left:1.4em}
+.tutorial li + li {margin-top:5px}
+.tutorial pre {background:var(--dark);color:var(--canvas);padding:14px 16px;border-radius:8px;overflow-x:auto;font-size:13px}

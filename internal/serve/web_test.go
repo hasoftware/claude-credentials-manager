@@ -387,18 +387,20 @@ func TestAppShell(t *testing.T) {
 		Manager:  NewManager(&fakeStarter{}, nil),
 		Loopback: true,
 	})
-	resp, err := http.Get(srv.URL + "/")
-	if err != nil {
-		t.Fatalf("GET /: %v", err)
-	}
-	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
-	s := string(body)
-	if !strings.Contains(s, `id="app"`) {
-		t.Errorf("shell missing app root: %s", s)
-	}
-	if !strings.Contains(s, `src="/static/app.js"`) {
-		t.Errorf("shell missing app.js script: %s", s)
+	for _, tt := range []struct{ path, title, marker, absent string }{
+		{"/", "Dashboard", `src="/static/usage.js"`, `src="/static/app.js"`},
+		{"/accounts", "Accounts", `id="app"`, `id="report-month"`},
+		{"/tutorial", "Tutorial", "ccm2 relogin --web codex", `src="/static/app.js"`},
+	} {
+		resp, err := http.Get(srv.URL + tt.path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil || resp.StatusCode != 200 || !strings.Contains(string(body), tt.marker) || strings.Contains(string(body), tt.absent) || !strings.Contains(string(body), `aria-current="page">`+tt.title+`</a>`) {
+			t.Errorf("unexpected %s panel: HTTP %d %v", tt.path, resp.StatusCode, err)
+		}
 	}
 }
 
