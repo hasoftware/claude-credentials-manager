@@ -82,14 +82,15 @@
 
   function quotaLine(label, window) {
     var value = window && Number.isFinite(window.used) ? window.used : null;
-    var percent = value === null ? "Not reported" : value.toLocaleString("en", { maximumFractionDigits: 1 }) + "% used";
-    var html = '<div class="quota-line"><div><b>' + label + '</b><span>' + percent + '</span></div>';
+    var missing = '<span class="quota-missing">Not reported</span>';
+    var detail = missing;
     if (value !== null) {
       var reset = Date.parse(window.resetsAt);
-      html += '<progress max="100" value="' + Math.max(0, Math.min(100, value)) + '" aria-label="' + label + ' quota used"></progress>';
-      if (Number.isFinite(reset)) html += '<small>Resets ' + resetTime.format(reset) + ' ICT</small>';
+      detail = '<span class="quota-percent">' + value.toLocaleString("en", { maximumFractionDigits: 1 }) + '% used</span>' +
+        '<progress max="100" value="' + Math.max(0, Math.min(100, value)) + '" aria-label="' + label + ' quota used"></progress>';
+      if (Number.isFinite(reset)) detail += '<small>Resets ' + resetTime.format(reset) + ' ICT</small>';
     }
-    return html + '</div>';
+    return '<div class="quota-line"><span class="quota-period">' + label + '</span><div class="quota-reading">' + detail + '</div></div>';
   }
 
   function quotaSummary(cred) {
@@ -144,10 +145,6 @@
     } else {
       sessionCell = '<span class="badge idle">idle</span>';
     }
-    var usageBtn =
-      c.credStatus === "expired"
-        ? '<button class="btn sm ghost" disabled>Details</button>'
-        : '<button class="btn sm ghost" data-action="usage" data-id="' + attr(c.id) + '">Details</button>';
     var actionBtns = actionButtonsHTML(c);
     return (
       '<tr data-id="' + attr(c.id) + '">' +
@@ -155,7 +152,7 @@
         '<td class="tier" data-label="Tier">' + tier + '</td>' +
         '<td data-label="Token expiry">' + credBadge + '</td>' +
         '<td data-label="Dashboard share">' + sessionCell + '</td>' +
-        '<td data-label="Provider quota"><div class="account-quota"><div id="quota-' + attr(c.id) + '">' + quotaSummary(c) + '</div>' + usageBtn + '</div></td>' +
+        '<td data-label="Provider quota"><div class="account-quota"><div id="quota-' + attr(c.id) + '">' + quotaSummary(c) + '</div></div></td>' +
         '<td class="actions">' + actionBtns + '</td>' +
       '</tr>'
     );
@@ -177,6 +174,9 @@
     }
     if (c.provider === "grok" || c.provider === "codex") {
       buttons += '<button class="btn sm" data-action="relogin" data-id="' + attr(c.id) + '">Relogin</button>';
+    }
+    if (c.credStatus !== "expired") {
+      buttons += '<button class="btn sm" data-action="usage" data-id="' + attr(c.id) + '">Quota details</button>';
     }
     return '<span class="actions-group">' + buttons + '</span>';
   }
