@@ -3,7 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
+	"strings"
 
 	"github.com/hasoftware/claude-credentials-manager/v2/internal/codex"
 	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
@@ -21,7 +23,7 @@ var (
 )
 
 var reloginCmd = &cobra.Command{
-	Use:   "relogin <id|name>",
+	Use:   "relogin [id|name|provider]",
 	Short: "Re-authenticate an existing credential in place (keeps its id and name)",
 	Long: `relogin re-runs the OAuth flow for an existing credential's provider and
 grafts the fresh tokens back onto the SAME credential — its id, name, and
@@ -32,17 +34,36 @@ can no longer rotate it. Unlike ` + "`ccm login`" + ` (which mints a brand-new
 credential with a new id), relogin keeps the credential's identity, so an
 active credential stays active and any share/serve pool membership is
 undisturbed.`,
-	Args: cobra.ExactArgs(1),
+	Args: cobra.MaximumNArgs(1),
 	RunE: runRelogin,
 }
 
 func init() {
 	rootCmd.AddCommand(reloginCmd)
+	reloginCmd.Flags().Bool("web", false, "renew the gateway account in the SSO portal")
 	// relogin hits auth.anthropic.com / auth.openai.com / auth.x.ai.
 	reloginCmd.PreRunE = requireOnline
 }
 
 func runRelogin(cmd *cobra.Command, args []string) error {
+	web, _ := cmd.Flags().GetBool("web")
+	if web || len(args) == 0 {
+		raw := os.Getenv("CCM_RELOGIN_ORIGIN")
+		if raw == "" {
+			raw = "https://sso.hoanganhdev.com"
+		}
+		u, err := url.Parse(raw)
+		if err != nil || u.Scheme != "https" || u.Host == "" || u.User != nil || strings.Trim(u.Path, "/") != "" || u.RawQuery != "" || u.Fragment != "" {
+			return fmt.Errorf("CCM_RELOGIN_ORIGIN must be an HTTPS origin")
+		}
+		u.Path = "/"
+		if len(args) == 1 {
+			u.RawQuery = url.Values{"account": {args[0]}}.Encode()
+		}
+		fmt.Fprintln(cmd.OutOrStdout(), "Open the gateway relogin portal:", u.String())
+		tryOpenBrowserFn(u.String())
+		return nil
+	}
 	existing, err := store.Resolve(args[0])
 	if err != nil {
 		return err

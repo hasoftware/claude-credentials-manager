@@ -58,8 +58,8 @@ var identityHeaderAllowlist = []string{
 // forwarding. httputil.ReverseProxy already removes hop-by-hop headers per
 // RFC 7230; this list is for things we specifically don't want to forward.
 var clientDenylist = []string{
-	"Authorization",     // replaced with real OAuth bearer
-	"X-Api-Key",         // no client-provided API key
+	"Authorization", // replaced with real OAuth bearer
+	"X-Api-Key",     // no client-provided API key
 	"Proxy-Authorization",
 	"Cookie",
 	"X-Forwarded-For",
@@ -414,6 +414,7 @@ func (p *Proxy) terminalForProvider() http.Handler {
 		var doer transport.Doer = p.codexTransport
 		doer = trace.WrapDoer(doer)
 		return codexmw.NewTerminal(codexmw.TerminalOpts{
+			RecordUsage:  recordGatewayUsage,
 			Cred:         p.cred(),
 			Transport:    doer,
 			Bundle:       identity.New(p.cred()),
@@ -424,6 +425,7 @@ func (p *Proxy) terminalForProvider() http.Handler {
 	case "grok":
 		p.grokTermOnce.Do(func() {
 			p.grokTerm = grokmw.NewTerminal(grokmw.TerminalOpts{
+				RecordUsage:  recordGatewayUsage,
 				Transport:    p.grokTransport,
 				UpstreamURL:  p.grokUpstreamURL,
 				BearerSrc:    p.bearerSrc,

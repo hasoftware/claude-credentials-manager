@@ -131,6 +131,7 @@ func (p *LocalProxy) setupProviderTerminal(cred *store.Credential, bearerSrc mid
 		}
 		// grokHandlersFn already trace-wraps its doer; do not double-wrap.
 		p.providerTerminal = grokmw.NewTerminal(grokmw.TerminalOpts{
+			RecordUsage:  recordGatewayUsage,
 			Transport:    h.Transport,
 			UpstreamURL:  h.UpstreamURL,
 			BearerSrc:    bearerSrc,
@@ -147,6 +148,7 @@ func (p *LocalProxy) setupProviderTerminal(cred *store.Credential, bearerSrc mid
 		var doer transport.Doer = h.Transport
 		doer = trace.WrapDoer(doer)
 		p.providerTerminal = codexmw.NewTerminal(codexmw.TerminalOpts{
+			RecordUsage:  recordGatewayUsage,
 			Cred:         cred,
 			Transport:    doer,
 			Bundle:       identity.New(cred),

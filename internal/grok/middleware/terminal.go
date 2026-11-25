@@ -48,6 +48,9 @@ const ctxCompactThreshold = 0.92
 
 // TerminalOpts configures the grok terminal handler.
 type TerminalOpts struct {
+	// RecordUsage receives the upstream counters once per translated response.
+	RecordUsage func(string, string, responses.FinalUsageInfo, bool)
+
 	// Transport is anything that can execute HTTP requests. Defaults to
 	// trace.WrapDoer(&http.Client{}) when nil.
 	Transport trace.Doer
@@ -181,6 +184,10 @@ func (t *Terminal) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		OmitThinkingText: responses.ThinkingOmitted(body),
 		UpstreamModel:    targetModel,
 	})
+	if t.opts.RecordUsage != nil {
+		defer func() { t.opts.RecordUsage(sessionID, targetModel, st.FinalUsage(), bodyStreams(body)) }()
+	}
+
 	src := decodeStream(resp.Header, resp.Body)
 
 	if !bodyStreams(body) {

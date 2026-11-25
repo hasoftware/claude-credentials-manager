@@ -30,6 +30,9 @@ import (
 
 // TerminalOpts configures the codex terminal handler.
 type TerminalOpts struct {
+	// RecordUsage receives the upstream counters once per translated response.
+	RecordUsage func(string, string, responses.FinalUsageInfo, bool)
+
 	Cred *store.Credential
 	// Transport is anything that can execute HTTP requests. The
 	// production caller passes *transport.Transport (codex's bogdanfinn
@@ -165,6 +168,10 @@ func (t *Terminal) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		MessageID: resp.Header.Get("X-Response-Id"),
 		Model:     originalModel, // surface inbound model name to the client
 	})
+
+	if t.opts.RecordUsage != nil {
+		defer func() { t.opts.RecordUsage(sessionID, effectiveModel, st.FinalUsage(), !isStreamFalse(body)) }()
+	}
 
 	// stream:false → buffer entire response and return JSON.
 	//

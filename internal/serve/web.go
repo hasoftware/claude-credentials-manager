@@ -258,6 +258,7 @@ func NewHandler(cfg ServerConfig) (http.Handler, error) {
 	// Authenticated JSON API.
 	mux.HandleFunc("POST /api/credentials/{id}/relogin/start", h.protected(h.reloginStart))
 	mux.HandleFunc("POST /api/credentials/{id}/relogin/finish", h.protected(h.reloginFinish))
+	mux.HandleFunc("GET /api/usage", h.protected(h.apiUsage))
 	mux.HandleFunc("GET /api/credentials", h.protected(h.apiListCredentials))
 	mux.HandleFunc("GET /api/credentials/{id}", h.protected(h.apiGetCredential))
 	mux.HandleFunc("POST /api/credentials/{id}", h.protected(h.apiStartSession))
@@ -286,6 +287,7 @@ func NewHandler(cfg ServerConfig) (http.Handler, error) {
 }
 
 type handler struct {
+	tokenUsage      usageIndex
 	relogins        reloginRegistry
 	cfg             ServerConfig
 	pages           *pages

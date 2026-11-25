@@ -251,7 +251,11 @@ Both flags required. The endpoint must be a full URL with `http`/`https` scheme 
 
 The CCM2 dashboard embeds the HASOFT theme from DESIGN.md. For a dedicated Dex v2.46.1 frontend, copy its stock web directory, overlay the two files from deploy/dex/templates into templates/, and place deploy/dex/theme/styles.css and internal/serve/static/design.css together in themes/hasoft/. Set frontend.dir to this web directory and frontend.theme to hasoft, then restart Dex.
 
-For the HASOFT tunnel deployment, point the SSO hostname at `http://127.0.0.1:5556`, run Caddy with `deploy/dex/Caddyfile`, and set Dex's `web.http` to `127.0.0.1:5557`. A direct visit to the SSO root starts sign-in through CCM2 so the client can establish OIDC state before showing the HASOFT form. Discovery and authorization requests pass through to Dex. Set the CCM2 URL in the Caddyfile when deploying on a different domain.
+For the HASOFT tunnel deployment, point the SSO hostname at `http://127.0.0.1:5556`, run Caddy with `deploy/dex/Caddyfile`, and set Dex's `web.http` to `127.0.0.1:5557`. Set `CCM_RELOGIN_ORIGIN=https://sso.hoanganhdev.com` on the admin service and register that origin's `/auth/callback` as a second redirect URI for the CCM2 client. Configure the corresponding Host in the Caddyfile for your deployment. Dex handles provider discovery and HASOFT authentication. The portal shows only provider accounts and their reconnection flow.
+
+Run `ccm relogin` to choose a gateway account, or `ccm relogin --web <provider|id|name>` to open a matching account after HASOFT login. Multiple matches require a selection. Complete the provider's authorization and paste its full localhost callback into the portal. The server checks the callback and updates the existing credential. For a different deployment set CCM_RELOGIN_ORIGIN on the CLI as well.
+
+The CCM2 dashboard reports gateway-observed tokens by calendar day and selected month (UTC+7). Translated Codex and Grok responses persist counters in the gateway user's usage directory. Cached input is counted once. The earliest record marks the start of available history.
 
 Use `ccm serve --sso --bind-host 127.0.0.1 --bind-port 7878` behind an HTTPS reverse proxy on the same host. Run the dashboard as the same OS user and with the same `CCM_HOME` as the gateway. Configure the private environment file for the service:
 

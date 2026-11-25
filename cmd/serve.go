@@ -100,6 +100,12 @@ func runServe(cmd *cobra.Command, _ []string) error {
 	var web http.Handler = handler
 	if sso != nil {
 		web = sso.Protect(handler)
+		if origin := os.Getenv("CCM_RELOGIN_ORIGIN"); origin != "" {
+			web, err = serve.WithReloginPortal(context.Background(), origin, web, handler)
+			if err != nil {
+				return err
+			}
+		}
 	}
 	srv := &http.Server{Handler: web, ReadHeaderTimeout: 10 * time.Second}
 

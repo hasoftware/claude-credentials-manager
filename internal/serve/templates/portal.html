@@ -1,0 +1,9 @@
+{{define "body"}}
+<header class="brand-bar"><div class="brand"><span class="brand-mark" aria-hidden="true">H</span>HASOFT <span class="brand-product">Provider access</span></div><form method="post" action="/auth/logout"><button class="btn ghost sm">Sign out</button></form></header>
+<section id="relogin-portal" data-selected="{{.Selected}}">
+  <header class="card-header"><div><h1 class="card-title">Reconnect an account</h1><p class="card-description">Sign in with your provider to renew the credentials used by the gateway.</p></div></header>
+  <div class="portal-list">{{range .Accounts}}
+    <article class="report-panel"><p class="provider-label">{{.Provider}}</p><h2>{{.Name}}</h2><p class="muted token-status">Token status · {{.Status}}</p>
+    <button type="button" class="btn primary" data-provider="{{.Provider}}" data-name="{{.Name}}" data-id="{{.ID}}">Reconnect account</button></article>
+  {{else}}<p>No matching Codex or Grok account. <a href="/">Show all accounts</a>.</p>{{end}}</div>
+</section><div id="toast-root"></div><script src="/static/app.js?v=portal1" defer></script>{{end}}

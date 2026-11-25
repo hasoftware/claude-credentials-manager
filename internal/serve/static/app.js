@@ -9,6 +9,7 @@
   "use strict";
 
   var POLL_MS = 3000;
+  var portal = document.getElementById("relogin-portal");
   var appRoot = document.getElementById("app");
 
   // Inline SVG glyphs used by dialogs. Keeping them here avoids an
@@ -27,7 +28,7 @@
     appRoot.innerHTML = [
       '<div class="card">',
       '  <header class="card-header"><div>',
-      '    <h1 class="card-title">Accounts</h1>',
+      '    <h2 class="card-title" id="accounts">Accounts</h2>',
       '    <p class="card-description">Manage gateway accounts and renew provider access.</p>',
       '  </div><button class="btn primary" id="add-credential-btn" type="button">' + ICON_PLUS + ' Add credential</button></header>',
       '  <dl class="metrics" aria-label="Account overview">',
@@ -187,6 +188,7 @@
   }
 
   document.addEventListener("visibilitychange", function () {
+    if (portal) return;
     if (document.hidden) { stopPolling(); }
     else { startPolling(); }
   });
@@ -375,6 +377,16 @@
           dlg.close();
           var name = (resp && resp.credential && (resp.credential.name || resp.credential.id)) || "new credential";
           toast("Logged in", "Logged in as " + name + ".", "success");
+          if (portal) {
+            window.history.replaceState(null,"","/");
+            var account = resp && resp.credential;
+            if (account) {
+              portal.querySelectorAll("button[data-id]").forEach(function(btn) {
+                if (btn.dataset.id === account.id) btn.parentNode.querySelector(".token-status").textContent = "Token status · " + account.credStatus.replace(/_/g," ");
+              });
+            }
+            return;
+          }
           pollOnce();
         })
         .catch(function (err) {
@@ -418,6 +430,7 @@
       '  <a class="btn primary" id="login-open-link" href="' + attr(start.authorizeUrl) + '" target="_blank" rel="noopener noreferrer">Open authorize page ↗</a>' +
       '</div>' +
       '<label class="field-label" for="login-redirect">Paste redirect URL</label>' +
+      '<span class="muted">After authorizing, copy the full localhost URL from the address bar, even if that page cannot load.</span>' +
       '<input class="input" id="login-redirect" autocomplete="off" spellcheck="false" placeholder="Paste the full callback URL">' +
       '<div id="login-error" class="quota-error" style="display:none"></div>';
 
@@ -456,6 +469,16 @@
           dlg.close();
           var name = (resp && resp.credential && (resp.credential.name || resp.credential.id)) || "new credential";
           toast("Logged in", "Logged in as " + name + ".", "success");
+          if (portal) {
+            window.history.replaceState(null,"","/");
+            var account = resp && resp.credential;
+            if (account) {
+              portal.querySelectorAll("button[data-id]").forEach(function(btn) {
+                if (btn.dataset.id === account.id) btn.parentNode.querySelector(".token-status").textContent = "Token status · " + account.credStatus.replace(/_/g," ");
+              });
+            }
+            return;
+          }
           pollOnce();
         })
         .catch(function (err) {
@@ -717,6 +740,14 @@
 
   /* ---- boot ------------------------------------------------------- */
 
-  renderShell();
-  startPolling();
+  if (portal) {
+    var choices = portal.querySelectorAll("button[data-provider]");
+    choices.forEach(function(button) {
+      button.addEventListener("click",function () { openRelogin(button.dataset); });
+    });
+    if (choices.length === 1 && portal.dataset.selected === "true") openRelogin(choices[0].dataset);
+  } else {
+    renderShell();
+    startPolling();
+  }
 })();

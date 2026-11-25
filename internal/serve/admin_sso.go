@@ -30,6 +30,7 @@ type AdminSSO struct {
 }
 type loginCookie struct {
 	State, Nonce, Verifier string
+	Account                string `json:",omitempty"`
 	Subject                string
 	Expiry                 int64
 }
@@ -51,8 +52,10 @@ func allowList(raw string, fold bool) map[string]bool {
 	return m
 }
 func NewAdminSSO(ctx context.Context) (*AdminSSO, error) {
+	return newAdminSSO(ctx, strings.TrimRight(os.Getenv("CCM_ADMIN_ORIGIN"), "/"))
+}
+func newAdminSSO(ctx context.Context, origin string) (*AdminSSO, error) {
 	issuer := os.Getenv("CCM_OIDC_ISSUER")
-	origin := strings.TrimRight(os.Getenv("CCM_ADMIN_ORIGIN"), "/")
 	client := os.Getenv("CCM_OIDC_CLIENT_ID")
 	secret := os.Getenv("CCM_OIDC_CLIENT_SECRET")
 	emails := allowList(os.Getenv("CCM_ADMIN_EMAILS"), true)
@@ -121,6 +124,9 @@ func (s *AdminSSO) read(r *http.Request, name string) (loginCookie, bool) {
 }
 func (s *AdminSSO) start(w http.ResponseWriter, r *http.Request) {
 	a := loginCookie{State: oauth2.GenerateVerifier(), Nonce: oauth2.GenerateVerifier(), Verifier: oauth2.GenerateVerifier(), Expiry: time.Now().Add(10 * time.Minute).Unix()}
+	if r.URL.Path == "/" && len(r.URL.Query().Get("account")) <= 256 {
+		a.Account = r.URL.Query().Get("account")
+	}
 	s.set(w, flowName, a)
 	http.Redirect(w, r, s.oauth.AuthCodeURL(a.State, oidc.Nonce(a.Nonce), oauth2.S256ChallengeOption(a.Verifier)), http.StatusFound)
 }
@@ -157,7 +163,11 @@ func (s *AdminSSO) callback(w http.ResponseWriter, r *http.Request) {
 		expiry = id.Expiry
 	}
 	s.set(w, sessionName, loginCookie{Subject: id.Subject, Expiry: expiry.Unix()})
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	target := "/"
+	if a.Account != "" {
+		target += "?" + url.Values{"account": {a.Account}}.Encode()
+	}
+	http.Redirect(w, r, target, http.StatusSeeOther)
 }
 func (s *AdminSSO) Protect(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

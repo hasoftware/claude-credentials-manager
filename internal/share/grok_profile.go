@@ -25,7 +25,8 @@ func extraGrokHandler(cred *store.Credential, aliases *alias.Map) (http.Handler,
 		return nil, err
 	}
 	return grokmw.NewTerminal(grokmw.TerminalOpts{
-		Transport: handlers.Transport, UpstreamURL: handlers.UpstreamURL,
+		RecordUsage: recordGatewayUsage,
+		Transport:   handlers.Transport, UpstreamURL: handlers.UpstreamURL,
 		CredentialID: cred.ID, BearerSrc: bearer,
 	}), nil
 }

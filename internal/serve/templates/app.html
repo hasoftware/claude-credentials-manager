@@ -3,6 +3,23 @@
   <div class="brand"><span class="brand-mark" aria-hidden="true">H</span><span>HASOFT</span><span class="brand-product">CCM2</span></div>
   {{if .SSO}}<form action="/auth/logout" method="post"><button class="btn ghost sm" type="submit">Sign out</button></form>{{end}}
 </header>
+<section id="usage" aria-labelledby="usage-title">
+  <header class="card-header report-head"><div><h1 class="card-title" id="usage-title">Gateway overview</h1><p class="card-description">Token activity across your gateway accounts.</p></div>
+    <a class="btn" href="#accounts">Manage accounts ↓</a></header>
+  <div class="report-controls"><label>Reporting month <input type="month" id="report-month" required></label><span>Vietnam time · UTC+7</span></div>
+  <dl class="token-stats">
+    <div><dt>Tokens today</dt><dd id="usage-today">—</dd><small id="usage-today-note"></small></div>
+    <div><dt>Tokens this period</dt><dd id="usage-month">—</dd><small id="usage-month-note"></small></div>
+    <div><dt>Metered requests</dt><dd id="usage-requests">—</dd><small>Selected month</small></div>
+  </dl>
+  <div class="report-panels">
+    <section class="report-panel"><h2>Daily token usage</h2><p id="usage-coverage" class="muted" role="status">Loading gateway history…</p>
+      <div id="token-chart"></div><p id="day-detail" class="day-detail"></p></section>
+    <section class="report-panel"><h2>Token breakdown</h2><div id="token-mix"></div></section>
+  </div>
+  <section class="report-panel model-panel"><h2>Usage by model</h2><div id="model-usage"></div></section>
+</section>
 <div id="app"></div>
+<script src="/static/usage.js" defer></script>
 <script src="/static/app.js" defer></script>
 {{end}}
