@@ -26,7 +26,6 @@ th:first-child,td:first-child {padding-left:20px}
 th:last-child,td:last-child {padding-right:20px}
 .name {font-weight:600;color:var(--ink);overflow-wrap:anywhere}
 .name .muted {display:block;font-weight:400;font-size:13px;text-transform:capitalize}
-.actions-group {display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
 th.actions {text-align:right}
 .badge {display:inline-flex;align-items:center;gap:6px;border-radius:99px;background:var(--card-paper);color:var(--body);padding:3px 10px;font-size:12px;white-space:nowrap}
 .status-valid,.mode-lan,.mode-tunnel {background:#e3efe3;color:#315e42}
@@ -91,7 +90,6 @@ dialog::backdrop {background:#18171570}
   td[data-label] {display:flex;align-items:center;justify-content:space-between;gap:12px}
   td[data-label]::before {content:attr(data-label);color:var(--muted-ink);font-size:13px}
   td.actions {border-top:1px solid var(--line);margin-top:10px;padding-top:12px}
-  .actions-group {justify-content:flex-start}
 }
 @media(max-width:520px){
   .card-header {align-items:flex-start;flex-direction:column;gap:18px}
@@ -140,7 +138,7 @@ dialog::backdrop {background:#18171570}
 .provider-identity img {display:block;flex:none}
 .quota-heading,.quota-cell {width:140px}
 .quota-cell {vertical-align:top}
-@media(min-width:961px){td.actions .actions-group {max-width:195px} td.actions {text-align:right}}
+@media(min-width:961px){td.actions {text-align:right}}
 .quota-reading {min-width:0;font-size:12px;line-height:1.45}
 .quota-missing,.quota-reading small {color:var(--muted-ink)}
 .quota-percent {font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
@@ -156,3 +154,12 @@ dialog::backdrop {background:#18171570}
   #table-mount td.quota-cell {display:block;grid-column:span 1;width:auto;padding-top:10px;margin-top:6px;border-top:1px solid var(--line)}
   td.quota-cell::before {display:block;margin-bottom:5px}
 }
+
+.account-config .dialog-body {gap:0;padding-block:8px 16px}
+.config-option {display:flex;align-items:center;justify-content:space-between;gap:16px;text-align:left;width:100%;padding:12px 8px;background:transparent;border:0;border-top:1px solid var(--line);font:inherit;color:var(--ink);cursor:pointer}
+.config-option:first-child {border-top:0}
+.config-option:hover,.config-option:focus-visible {background:var(--paper)}
+.config-option strong,.config-option small {display:block}
+.config-option small {margin-top:2px;color:var(--muted-ink);font-size:13px}
+.config-arrow {color:var(--muted-ink);font-size:20px}
+.config-option[data-command="stop"] strong {color:#8a392b}

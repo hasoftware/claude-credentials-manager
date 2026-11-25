@@ -72,7 +72,9 @@
         '</tr></thead>' +
         '<tbody>' + rows + '</tbody>' +
       '</table>';
-    bindRowActions(creds);
+    mount.querySelectorAll(".config-trigger").forEach(function (button) {
+      button.addEventListener("click", function () { openAccountConfig(button.dataset.id); });
+    });
   }
 
   var quotaCache = new Map();
@@ -169,7 +171,6 @@
     } else {
       sessionCell = '<span class="badge idle">idle</span>';
     }
-    var actionBtns = actionButtonsHTML(c);
     return (
       '<tr data-id="' + attr(c.id) + '">' +
         '<td class="provider" data-label="Provider">' + providerHTML(c.provider) + '</td>' +
@@ -178,56 +179,89 @@
         '<td data-label="Token expiry">' + credBadge + '</td>' +
         '<td data-label="Dashboard share">' + sessionCell + '</td>' +
         quotaCells(c) +
-        '<td class="actions">' + actionBtns + '</td>' +
+        '<td class="actions"><button type="button" class="btn sm config-trigger" data-id="' + attr(c.id) +
+          '" aria-haspopup="dialog" aria-label="Config for ' + attr(c.name || c.id) + '">Config</button></td>' +
       '</tr>'
     );
   }
 
-  function actionButtonsHTML(c) {
-    var buttons;
-    if (c.session) {
-      buttons =
-        '<button class="btn sm" data-action="ticket" data-id="' + attr(c.id) + '">View ticket</button>' +
-        '<button class="btn sm destructive" data-action="stop" data-id="' + attr(c.id) + '">Stop</button>';
-    } else if (c.credStatus === "expired") {
-      buttons =
-        '<button class="btn sm" data-action="refresh" data-id="' + attr(c.id) + '">Refresh</button>';
-    } else {
-      buttons =
-        '<button class="btn sm" data-action="start-tunnel" data-id="' + attr(c.id) + '">Start tunnel</button>' +
-        '<button class="btn sm" data-action="start-lan" data-id="' + attr(c.id) + '">Start LAN</button>';
-    }
-    if (c.provider === "grok" || c.provider === "codex") {
-      buttons += '<button class="btn sm" data-action="relogin" data-id="' + attr(c.id) + '">Relogin</button>';
-    }
-    if (c.credStatus !== "expired") {
-      buttons += '<button class="btn sm" data-action="usage" data-id="' + attr(c.id) + '">Quota details</button>';
-    }
-    return '<span class="actions-group">' + buttons + '</span>';
+  var actionInfo = {
+    "start-tunnel": ["Start tunnel", "Share through a Cloudflare tunnel."],
+    "start-lan": ["Start LAN", "Share on your local network."],
+    relogin: ["Relogin", "Renew access with the provider."],
+    usage: ["Quota details", "View all quota windows and reset times."],
+    ticket: ["View ticket", "Open the connection details for this share."],
+    stop: ["Stop share", "Disconnect the active share."],
+    refresh: ["Refresh token", "Try renewing the expired access token."]
+  };
+
+  function availableActions(c) {
+    var keys = c.session ? ["ticket", "stop"] :
+      c.credStatus === "expired" ? ["refresh"] : ["start-tunnel", "start-lan"];
+    if (c.provider === "grok" || c.provider === "codex") keys.push("relogin");
+    if (c.credStatus !== "expired") keys.push("usage");
+    return keys;
   }
 
-  function bindRowActions(creds) {
-    var byID = {};
-    creds.forEach(function (c) { byID[c.id] = c; });
-    var nodes = appRoot.querySelectorAll("button[data-action]");
-    for (var i = 0; i < nodes.length; i++) {
-      (function (btn) {
-        btn.addEventListener("click", function () {
-          var id = btn.getAttribute("data-id");
-          var action = btn.getAttribute("data-action");
-          var cred = byID[id];
-          switch (action) {
-            case "relogin":       return openRelogin(cred);
-            case "usage":         return openUsageDialog(cred);
-            case "ticket":        return openTicketDialog(cred);
-            case "start-tunnel":  return startSession(cred, { mode: "tunnel" });
-            case "start-lan":     return openStartLANDialog(cred);
-            case "stop":          return stopSession(cred);
-            case "refresh":       return refreshCredential(cred, btn);
-          }
-        });
-      })(nodes[i]);
-    }
+  function configOptions(keys) {
+    return keys.map(function (key) {
+      var info = actionInfo[key];
+      return '<button type="button" class="config-option" data-command="' + key + '">' +
+        '<span><strong>' + info[0] + '</strong><small>' + info[1] + '</small></span>' +
+        '<span class="config-arrow" aria-hidden="true">›</span></button>';
+    }).join("");
+  }
+
+  var syncAccountConfig = null;
+
+  function openAccountConfig(id) {
+    function current() { return lastCredentials.find(c => c.id === id); }
+    var cred = current();
+    if (!cred) return;
+    var keys = availableActions(cred);
+    var dlg = dialog({
+      title: "Account config",
+      description: (providerNames.get(cred.provider) || cred.provider) + " · " + (cred.name || id),
+      body: configOptions(keys),
+      footer: [{label:"Close", action:"close"}]
+    });
+    dlg.classList.add("account-config");
+    dlg.setAttribute("aria-label","Account config for " + (cred.name || id));
+    var options = dlg.querySelector(".dialog-body");
+    syncAccountConfig = function () {
+      var latest = current();
+      if (!latest) { dlg.close(); return; }
+      var next = availableActions(latest);
+      if (keys.join() !== next.join()) {
+        keys = next;
+        options.innerHTML = configOptions(keys);
+      }
+    };
+    dlg.addEventListener("close", function () {
+      syncAccountConfig = null;
+      dlg.remove();
+      if (!document.querySelector("dialog[open]")) {
+        var trigger = appRoot.querySelector('.config-trigger[data-id="' + CSS.escape(id) + '"]');
+        if (trigger) trigger.focus({preventScroll:true});
+      }
+    }, {once:true});
+    options.addEventListener("click", function (event) {
+      var btn = event.target.closest("button[data-command]");
+      var latest = current();
+      if (!btn || !latest) return;
+      var key = btn.dataset.command;
+      if (!availableActions(latest).includes(key)) { syncAccountConfig(); return; }
+      dlg.close();
+      switch (key) {
+        case "relogin": return openRelogin(latest);
+        case "usage": return openUsageDialog(latest);
+        case "ticket": return openTicketDialog(latest);
+        case "start-tunnel": return startSession(latest, {mode:"tunnel"});
+        case "start-lan": return openStartLANDialog(latest);
+        case "stop": return stopSession(latest);
+        case "refresh": return refreshCredential(latest, btn);
+      }
+    });
   }
 
   /* ---- polling ----------------------------------------------------- */
@@ -245,8 +279,13 @@
         return resp.json();
       })
       .then(function (body) {
-        lastCredentials = body.credentials || [];
-        renderTable(lastCredentials);
+        var next = body.credentials || [];
+        var changed = JSON.stringify(next) !== JSON.stringify(lastCredentials);
+        lastCredentials = next;
+        if (changed) {
+          renderTable(lastCredentials);
+          if (syncAccountConfig) syncAccountConfig();
+        }
         updateAccountQuotas(lastCredentials);
         document.getElementById("reconnect").classList.remove("shown");
         document.getElementById("last-updated").textContent =
