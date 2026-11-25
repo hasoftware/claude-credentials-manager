@@ -30,13 +30,13 @@ import (
 
 // TerminalOpts configures the codex terminal handler.
 type TerminalOpts struct {
-	Cred        *store.Credential
+	Cred *store.Credential
 	// Transport is anything that can execute HTTP requests. The
 	// production caller passes *transport.Transport (codex's bogdanfinn
 	// TLS client). The share proxy may wrap it via trace.WrapDoer
 	// when CCM_TRACE=1 is set.
-	Transport   transport.Doer
-	Bundle      *identity.Bundle
+	Transport transport.Doer
+	Bundle    *identity.Bundle
 	// UpstreamURL overrides the codex backend (default "https://chatgpt.com").
 	// Test-only; production callers leave it blank.
 	UpstreamURL string
@@ -102,9 +102,9 @@ func (t *Terminal) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// SessionID is mirrored into prompt_cache_key inside the
 		// translator so cache slots line up with upstream Codex.
 		reqOpts := responses.RequestOpts{
-			TargetModel: effectiveModel,
+			TargetModel:   effectiveModel,
 			CodexControls: models.SupportsControls(effectiveModel),
-			SessionID:   sessionID,
+			SessionID:     sessionID,
 		}
 		outBody, err = responses.TranslateRequest(body, reqOpts)
 		if err != nil {
@@ -260,7 +260,24 @@ func (t *Terminal) doWith401Retry(ctx context.Context, body []byte, sessionID st
 			// malformed URL; neither applies here.
 			return nil, err
 		}
-		t.opts.Bundle.Apply(req)
+		if src, ok := t.opts.BearerSrc.(interface {
+			FreshCredential() (*store.Credential, error)
+		}); ok {
+			cred, err := src.FreshCredential()
+			if err != nil {
+				return nil, err
+			}
+			identity.New(cred).Apply(req)
+		} else {
+			t.opts.Bundle.Apply(req)
+			if t.opts.BearerSrc != nil {
+				bearer, err := t.opts.BearerSrc.Fresh()
+				if err != nil {
+					return nil, err
+				}
+				req.Header.Set("Authorization", "Bearer "+bearer)
+			}
+		}
 		// Per spec 2026-05-09-codex-omniroute-bridging §5.6: the dynamic
 		// per-request identity headers (session/thread/window IDs from
 		// inbound, plus fresh-per-call turn metadata and request ID) live
@@ -283,9 +300,6 @@ func (t *Terminal) doWith401Retry(ctx context.Context, body []byte, sessionID st
 	// 401: drain + close, refresh credential, retry once.
 	_, _ = io.Copy(io.Discard, resp.Body)
 	resp.Body.Close()
-	if _, err := t.opts.BearerSrc.Fresh(); err != nil {
-		return nil, fmt.Errorf("upstream 401 and refresh failed: %w", err)
-	}
 	req2, err := build()
 	if err != nil {
 		// Unreachable: see comment in build() above. The URL and method

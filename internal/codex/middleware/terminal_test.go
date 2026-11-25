@@ -354,10 +354,10 @@ func TestTerminal_DieFastOnModelNotFound(t *testing.T) {
 	var dieReason atomic.Value
 
 	term := codexmw.NewTerminal(codexmw.TerminalOpts{
-		Cred:        minimalCred("tok"),
-		Transport:   newTransport(t),
-		Bundle:      identity.New(minimalCred("tok")),
-		UpstreamURL: upstream.URL,
+		Cred:         minimalCred("tok"),
+		Transport:    newTransport(t),
+		Bundle:       identity.New(minimalCred("tok")),
+		UpstreamURL:  upstream.URL,
 		OnSessionDie: func(reason string) { dieReason.Store(reason) },
 	})
 
@@ -467,17 +467,51 @@ func TestTerminal_StreamFalseBuffersCollected(t *testing.T) {
 
 type fakeBearerSrc struct {
 	refreshed int
-	token     string // value to return AND, when cred is non-nil, write into cred.Tokens.AccessToken
+	token     string
 	err       error
-	cred      *store.Credential // optional: when non-nil, Fresh mutates cred.Tokens.AccessToken
 }
 
 func (f *fakeBearerSrc) Fresh() (string, error) {
 	f.refreshed++
-	if f.cred != nil && f.cred.Tokens != nil && f.err == nil {
-		f.cred.Tokens.AccessToken = f.token
+	if f.refreshed == 1 {
+		return "disk-tok", nil
 	}
 	return f.token, f.err
+}
+
+type currentCodexCredential struct {
+	fakeBearerSrc
+	current *store.Credential
+}
+
+func (s *currentCodexCredential) FreshCredential() (*store.Credential, error) {
+	return s.current, nil
+}
+
+func TestTerminalUsesReloggedCredentialOnFirstRequest(t *testing.T) {
+	startup := minimalCred("revoked")
+	current := minimalCred("current")
+	current.Tokens.AccountID = "current-account"
+	called := make(chan bool, 1)
+	upstream := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called <- r.Header.Get("Authorization") == "Bearer current" && r.Header.Get("chatgpt-account-id") == "current-account"
+		w.WriteHeader(http.StatusBadRequest)
+	}))
+	defer upstream.Close()
+	term := codexmw.NewTerminal(codexmw.TerminalOpts{
+		Cred: startup, Bundle: identity.New(startup), Transport: newTransport(t),
+		UpstreamURL: upstream.URL, BearerSrc: &currentCodexCredential{current: current},
+	})
+	req := httptest.NewRequest("POST", "/v1/messages", strings.NewReader(`{"model":"uthink-oai","messages":[{"role":"user","content":"test"}]}`))
+	withAlias(t, "", term, req, httptest.NewRecorder())
+	select {
+	case ok := <-called:
+		if !ok {
+			t.Fatal("request used stale Codex login")
+		}
+	default:
+		t.Fatal("missing upstream request")
+	}
 }
 
 func TestTerminal_401TriggersRefreshAndRetry(t *testing.T) {
@@ -503,11 +537,8 @@ func TestTerminal_401TriggersRefreshAndRetry(t *testing.T) {
 	}))
 	defer upstream.Close()
 
-	// Single shared cred, mirroring production wiring (proxy passes the
-	// same *store.Credential into Cred and Bundle in
-	// terminalForProvider).
 	cred := minimalCred("old-tok")
-	bearer := &fakeBearerSrc{token: "fresh-tok", cred: cred}
+	bearer := &fakeBearerSrc{token: "fresh-tok"}
 	term := codexmw.NewTerminal(codexmw.TerminalOpts{
 		Cred:        cred,
 		Transport:   newTransport(t),
@@ -522,8 +553,8 @@ func TestTerminal_401TriggersRefreshAndRetry(t *testing.T) {
 
 	withAlias(t, "claude-opus-*=gpt-5-codex", term, req, rr)
 
-	if bearer.refreshed != 1 {
-		t.Errorf("BearerSrc.Fresh() called %d times, want 1", bearer.refreshed)
+	if bearer.refreshed != 2 {
+		t.Errorf("BearerSrc.Fresh() called %d times, want 2", bearer.refreshed)
 	}
 	if requestCount != 2 {
 		t.Errorf("upstream received %d requests, want 2", requestCount)
@@ -531,8 +562,8 @@ func TestTerminal_401TriggersRefreshAndRetry(t *testing.T) {
 	if rr.Code != http.StatusOK {
 		t.Errorf("status = %d, want 200", rr.Code)
 	}
-	if firstAuth != "Bearer old-tok" {
-		t.Errorf("first attempt Authorization = %q, want %q", firstAuth, "Bearer old-tok")
+	if firstAuth != "Bearer disk-tok" {
+		t.Errorf("first attempt Authorization = %q, want %q", firstAuth, "Bearer disk-tok")
 	}
 	if secondAuth != "Bearer fresh-tok" {
 		t.Errorf("second attempt Authorization = %q, want %q (token must rotate after Fresh)", secondAuth, "Bearer fresh-tok")
@@ -836,7 +867,7 @@ func TestTerminal_CollectContextCancel(t *testing.T) {
 
 	// Once the upstream headers have arrived, Collect has already flushed
 	// HTTP 200. Both cancellation paths return an Anthropic error body.
-	var failure struct { Type string }
+	var failure struct{ Type string }
 	if err := json.Unmarshal(rr.Body.Bytes(), &failure); err != nil || failure.Type != "error" {
 		t.Fatalf("expected a cancellation error, HTTP %d: %s", rr.Code, rr.Body.String())
 	}
@@ -1647,4 +1678,3 @@ func TestTerminal_ContextLengthExceeded_Returns400(t *testing.T) {
 		t.Errorf("body missing invalid_request_error type:\n%s", rr.Body.String())
 	}
 }
-

@@ -34,24 +34,34 @@ func newCredState(cred *store.Credential) (*credState, error) {
 // flock and dispatches per provider (claude / codex). Codex's rotating
 // refresh-token model is handled inside credflow.
 func (s *credState) Fresh() (string, error) {
+	cred, err := s.FreshCredential()
+	if err != nil {
+		return "", err
+	}
+	return cred.AccessToken(), nil
+}
+
+// FreshCredential returns the current credential snapshot so Codex can send
+// the bearer and account ID from the same login on every upstream attempt.
+func (s *credState) FreshCredential() (*store.Credential, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	s.reloadIfPeerWrote()
 
 	if !s.cred.IsExpired() && !s.cred.IsExpiringSoon() {
-		return s.cred.AccessToken(), nil
+		return s.cred, nil
 	}
 
 	fresh, err := credflow.RefreshFn(s.cred.ID)
 	if err != nil {
-		return "", fmt.Errorf("refresh: %w", err)
+		return nil, fmt.Errorf("refresh: %w", err)
 	}
 	s.cred = fresh
 	if info, statErr := os.Stat(store.CredPath(s.cred.ID)); statErr == nil {
 		s.mtime = info.ModTime()
 	}
-	return s.cred.AccessToken(), nil
+	return s.cred, nil
 }
 
 // reloadIfPeerWrote re-reads the credential from disk if the file's
