@@ -425,10 +425,6 @@
 
   /* ---- add-credential dialog -------------------------------------- */
 
-  // openLoginDialog shows a provider picker (Claude / Codex) and then
-  // drives the two-step OAuth flow for whichever provider is chosen.
-  //   Claude: /api/login/start → paste code → /api/login/finish
-  //   Codex:  /api/login/codex/start → paste redirect URL → /api/login/codex/finish
   function openLoginDialog() {
     var dlg = dialog({
       title: "Add credential",
@@ -438,6 +434,9 @@
         '<select class="input" id="login-provider">' +
           '<option value="claude">Claude</option>' +
           '<option value="codex">Codex (ChatGPT)</option>' +
+          '<option value="grok">Grok (xAI)</option>' +
+          '<optgroup label="Personal web login unavailable">' +
+          '<option disabled>Muse (Meta)</option><option disabled>DeepSeek Chat</option></optgroup>' +
         '</select>',
       footer: [
         { label: "Cancel", ghost: true, action: "close" },
@@ -448,19 +447,19 @@
 
     var select = dlg.querySelector("#login-provider");
     dlg.querySelector('[data-dialog-action="submit"]').addEventListener("click", function () {
-      var provider = select.value;
-      if (provider === "codex") {
-        renderLoginLoading(dlg, "Contacting OpenAI…");
-        postJSON("/api/login/codex/start", null)
-          .then(function (resp) { renderCodexLoginStep2(dlg, resp); })
-          .catch(function (err) { renderLoginError(dlg, err, provider); });
-      } else {
-        renderLoginLoading(dlg, "Contacting Claude…");
-        postJSON("/api/login/start", null)
-          .then(function (resp) { renderLoginStep2(dlg, resp); })
-          .catch(function (err) { renderLoginError(dlg, err, provider); });
-      }
+      beginAddProvider(dlg, select.value);
     });
+  }
+
+  function beginAddProvider(dlg, provider) {
+    var base = provider === "claude" ? "/api/login/" : "/api/login/" + provider + "/";
+    renderLoginLoading(dlg, "Contacting " + providerNames.get(provider) + "…");
+    postJSON(base + "start", null)
+      .then(function (resp) {
+        if (provider === "claude") renderLoginStep2(dlg, resp);
+        else renderCodexLoginStep2(dlg, resp, base + "finish");
+      })
+      .catch(function (err) { renderLoginError(dlg, err, provider); });
   }
 
   // renderLoginLoading swaps the dialog body to a loading message
@@ -658,10 +657,6 @@
     var msg = err && err.message ? err.message : "unknown error";
     bodyEl.innerHTML = '<div class="quota-error">' + escapeHTML(msg) + '</div>';
 
-    var startURL = provider === "codex" ? "/api/login/codex/start" : "/api/login/start";
-    var step2Fn  = provider === "codex" ? renderCodexLoginStep2 : renderLoginStep2;
-    var loadMsg  = provider === "codex" ? "Contacting OpenAI…" : "Contacting Claude…";
-
     var footer = dlg.querySelector(".dialog-footer");
     footer.innerHTML =
       '<button class="btn ghost" type="button" data-dialog-action="close">Close</button>' +
@@ -669,10 +664,7 @@
     footer.querySelector('[data-dialog-action="close"]')
       .addEventListener("click", function () { dlg.close(); });
     footer.querySelector("#login-retry").addEventListener("click", function () {
-      renderLoginLoading(dlg, loadMsg);
-      postJSON(startURL, null)
-        .then(function (resp) { step2Fn(dlg, resp); })
-        .catch(function (e) { renderLoginError(dlg, e, provider); });
+      beginAddProvider(dlg, provider);
     });
   }
 

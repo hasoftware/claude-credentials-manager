@@ -1,26 +1,26 @@
-@import url("./design.css");
+@import url("./design.css?v=inter1");
 
 * {box-sizing: border-box}
 body {margin: 0; background: var(--canvas); color: var(--body); font: 400 14px/1.55 var(--sans); -webkit-font-smoothing: antialiased}
 main {width: min(1200px, 100%); margin: auto; padding: 0 clamp(16px,4vw,48px) 64px}
 h1,h2,h3,dl,dd {margin: 0}
-h1,h2,h3 {font-family: var(--display); font-weight: 400; color: var(--ink); line-height: 1.1; letter-spacing: -.035em}
+h1,h2,h3 {font-family: var(--display); font-weight: 620; color: var(--ink); line-height: 1.2; letter-spacing: -.028em}
 a {color: var(--coral-active); text-underline-offset: 3px}
 .muted,.card-description,.dialog-description {color: var(--muted-ink)}
 .card-header {display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; padding: clamp(44px,6vw,80px) 0 28px}
-.card-title {font-size: clamp(44px,5.5vw,64px)}
+.card-title {font-size: clamp(34px,4.3vw,50px)}
 .card-description {margin: 10px 0 0; font-size: 16px}
 .metrics {display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); background:var(--dark); color:var(--canvas); border-radius:12px; padding:24px 0; margin:0 0 40px}
 .metrics div {padding:0 clamp(14px,3vw,36px); border-inline-start:1px solid #484540}
 .metrics div:first-child {border:0}
 .metrics dt {font-size:13px; color:#d7d2c8}
-.metrics dd {font:400 clamp(30px,4vw,44px)/1.12 var(--display); letter-spacing:-.035em; margin-top:5px; font-variant-numeric:tabular-nums}
+.metrics dd {font:550 clamp(30px,4vw,44px)/1.12 var(--display); letter-spacing:-.035em; margin-top:5px; font-variant-numeric:tabular-nums}
 .list-header {display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 14px}
 .list-header h2 {font-size:28px}
 #last-updated {font:12px/1.5 var(--mono)}
 table {width:100%;border-collapse:separate;border-spacing:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
 thead {background:var(--paper)}
-th {text-align:left;font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted-ink);padding:13px 12px}
+th {text-align:left;font-size:11px;font-weight:600;letter-spacing:.055em;text-transform:uppercase;color:var(--muted-ink);padding:13px 12px}
 td {padding:18px 12px;border-top:1px solid var(--line);vertical-align:middle}
 th:first-child,td:first-child {padding-left:20px}
 th:last-child,td:last-child {padding-right:20px}
@@ -108,7 +108,7 @@ dialog::backdrop {background:#18171570}
 .token-stats div,.report-panel {border:1px solid var(--line);border-radius:14px;background:var(--paper);padding:clamp(16px,2.5vw,28px)}
 .token-stats div:first-child {background:var(--dark);color:var(--canvas)}
 .token-stats dt {font-weight:500}
-.token-stats dd {font:400 clamp(34px,5vw,56px)/1.25 var(--display);letter-spacing:-.045em}
+.token-stats dd {font:550 clamp(34px,5vw,56px)/1.25 var(--display);font-variant-numeric:tabular-nums;letter-spacing:-.035em}
 .token-stats small {opacity:.8}
 .report-panels {display:grid;grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);gap:14px;margin:14px 0}
 .report-panel {background:var(--canvas);min-width:0}

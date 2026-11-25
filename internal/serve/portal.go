@@ -54,7 +54,7 @@ func WithReloginPortal(ctx context.Context, origin string, admin, inner http.Han
 			Selected bool
 		}{"Provider access", accounts, target != ""})
 	})
-	for _, path := range []string{"/static/app.js", "/static/design.css", "/static/style.css"} {
+	for _, path := range []string{"/static/app.js", "/static/design.css", "/static/fonts/inter-latin-wght-normal.woff2", "/static/fonts/inter-vietnamese-wght-normal.woff2", "/static/style.css"} {
 		routes.Handle("GET "+path, inner)
 	}
 	for _, step := range []string{"start", "finish"} {

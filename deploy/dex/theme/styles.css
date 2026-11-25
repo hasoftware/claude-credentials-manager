@@ -1,4 +1,4 @@
-@import url("./design.css");
+@import url("./design.css?v=inter1");
 
 .theme-body {margin:0;background:var(--canvas);color:var(--body);font:400 16px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
 .brand-bar {width:min(calc(100% - 40px),1104px);margin:auto}
@@ -7,7 +7,7 @@
 .access-layout {display:grid;grid-template-columns:1fr 1fr;min-height:465px;overflow:hidden;border:1px solid var(--line);border-radius:16px}
 .theme-panel,.dex-home {padding:clamp(24px,4vw,48px);background:var(--paper);border:1px solid var(--line);border-radius:12px;text-align:left}
 .access-layout .theme-panel {align-self:center;background:var(--canvas);border:0;border-radius:0}
-.theme-heading,.dex-home h1,.dex-home h2 {font:400 clamp(36px,4.5vw,48px)/1.1 var(--display);letter-spacing:-.036em;color:var(--ink);margin:0 0 14px}
+.theme-heading,.dex-home h1,.dex-home h2 {font:620 clamp(32px,4vw,42px)/1.2 var(--display);letter-spacing:-.036em;color:var(--ink);margin:0 0 14px}
 .form-intro {margin:0 0 24px;color:var(--muted-ink);font-size:15px}
 .theme-form-row {margin:0 0 16px;text-align:left}
 .theme-form-label {display:block;margin:0 0 5px;color:var(--body);font-size:14px;font-weight:500}

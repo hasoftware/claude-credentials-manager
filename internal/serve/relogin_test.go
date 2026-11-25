@@ -60,3 +60,49 @@ func TestWebReloginKeepsGatewayCredential(t *testing.T) {
 		t.Fatal("did not update original credential")
 	}
 }
+
+func TestAddGrokCredential(t *testing.T) {
+	t.Setenv("CCM_HOME", t.TempDir())
+	h := &handler{cfg: ServerConfig{Manager: NewManager(nil, nil)}}
+	base := "/api/login/grok/"
+	req := httptest.NewRequest("POST", base+"start", nil)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	h.grokAddStart(w, req)
+	var start APILoginCodexStartResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &start); err != nil || w.Code != 200 || start.State == "" {
+		t.Fatal("start failed", err, w.Code)
+	}
+	cookie := w.Result().Cookies()[0]
+	if cookie.Path != base || !cookie.HttpOnly {
+		t.Fatal("wrong cookie scope")
+	}
+	key := "add:grok:" + start.State
+	a := h.relogins.byID[key]
+	id := uuid.NewString()
+	a.exchange = func(string) (*store.Credential, error) {
+		return &store.Credential{ID: id, Provider: "grok", Name: "Example", GrokTokens: &store.GrokTokens{AccessToken: "private-test-token"}}, nil
+	}
+	h.relogins.byID[key] = a
+	finish := func(bound bool) int {
+		payload, _ := json.Marshal(APILoginCodexFinishRequest{State: start.State, RedirectURL: a.callback + "?code=test&state=" + start.State})
+		r := httptest.NewRequest("POST", base+"finish", strings.NewReader(string(payload)))
+		r.Header.Set("Content-Type", "application/json")
+		if bound {
+			r.AddCookie(cookie)
+		}
+		out := httptest.NewRecorder()
+		h.grokAddFinish(out, r)
+		if strings.Contains(out.Body.String(), "private-test-token") {
+			t.Fatal("secret in response")
+		}
+		return out.Code
+	}
+	if finish(false) != 403 || finish(true) != 201 || finish(true) != 400 {
+		t.Fatal("unexpected callback status")
+	}
+	c, err := store.Load(id)
+	if err != nil || c.ProviderName() != "grok" || c.AccessToken() != "private-test-token" {
+		t.Fatal("missing credential")
+	}
+}

@@ -6,7 +6,7 @@
 http://:5556 {
 	bind 127.0.0.1
 
-	@portal path / /auth/callback /auth/logout /signed-out /static/style.css /static/design.css /static/app.js /api/credentials/*/relogin/*
+	@portal path / /auth/callback /auth/logout /signed-out /static/style.css /static/design.css /static/fonts/inter-latin-wght-normal.woff2 /static/fonts/inter-vietnamese-wght-normal.woff2 /static/app.js /api/credentials/*/relogin/*
 	handle @portal {
 		reverse_proxy 127.0.0.1:7878 {
 			header_up Host sso.hoanganhdev.com

@@ -273,6 +273,8 @@ func NewHandler(cfg ServerConfig) (http.Handler, error) {
 	mux.HandleFunc("POST /api/login/finish", h.protected(h.apiLoginFinish))
 
 	// Authenticated OAuth-add-credential flow (Codex / OpenAI).
+	mux.HandleFunc("POST /api/login/grok/start", h.protected(h.grokAddStart))
+	mux.HandleFunc("POST /api/login/grok/finish", h.protected(h.grokAddFinish))
 	mux.HandleFunc("POST /api/login/codex/start", h.protected(h.apiLoginCodexStart))
 	mux.HandleFunc("POST /api/login/codex/finish", h.protected(h.apiLoginCodexFinish))
 

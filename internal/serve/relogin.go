@@ -50,7 +50,18 @@ func (h *handler) reloginStart(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 404, map[string]string{"error": "Unknown credential"})
 		return
 	}
-	a := reloginAttempt{provider: cred.ProviderName(), browser: uuid.NewString(), deadline: time.Now().Add(loginHandshakeTTL)}
+	h.beginAuthorization(w, r, cred.ProviderName(), id)
+}
+
+func (h *handler) grokAddStart(w http.ResponseWriter, r *http.Request) {
+	if reloginRequestOK(w, r) {
+		h.beginAuthorization(w, r, "grok", "")
+	}
+}
+
+func (h *handler) beginAuthorization(w http.ResponseWriter, r *http.Request, provider, id string) {
+	var err error
+	a := reloginAttempt{provider: provider, browser: uuid.NewString(), deadline: time.Now().Add(loginHandshakeTTL)}
 	var link string
 	switch a.provider {
 	case "codex":
@@ -93,18 +104,30 @@ func (h *handler) reloginStart(w http.ResponseWriter, r *http.Request) {
 			delete(h.relogins.byID, key)
 		}
 	}
+	path := "/api/credentials/" + id + "/relogin/"
+	if id == "" {
+		id = "add:grok:" + a.state
+		path = "/api/login/grok/"
+	}
 	h.relogins.byID[id] = a
 	h.relogins.mu.Unlock()
-	http.SetCookie(w, &http.Cookie{Name: "ccm_relogin", Value: a.browser, Path: "/api/credentials/" + id + "/relogin/", HttpOnly: true, Secure: r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https", SameSite: http.SameSiteStrictMode, MaxAge: int(loginHandshakeTTL.Seconds())})
+	http.SetCookie(w, &http.Cookie{Name: "ccm_relogin", Value: a.browser, Path: path, HttpOnly: true, Secure: r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https", SameSite: http.SameSiteStrictMode, MaxAge: int(loginHandshakeTTL.Seconds())})
 	w.Header().Set("Cache-Control", "no-store")
 	writeJSON(w, 200, APILoginCodexStartResponse{Version: APIVersion, State: a.state, AuthorizeURL: link})
 }
 
 func (h *handler) reloginFinish(w http.ResponseWriter, r *http.Request) {
+	h.finishAuthorization(w, r, r.PathValue("id"), false)
+}
+
+func (h *handler) grokAddFinish(w http.ResponseWriter, r *http.Request) {
+	h.finishAuthorization(w, r, "", true)
+}
+
+func (h *handler) finishAuthorization(w http.ResponseWriter, r *http.Request, id string, add bool) {
 	if !reloginRequestOK(w, r) {
 		return
 	}
-	id := r.PathValue("id")
 	var body APILoginCodexFinishRequest
 	if json.NewDecoder(http.MaxBytesReader(w, r.Body, 32768)).Decode(&body) != nil {
 		writeJSON(w, 400, map[string]string{"error": "Invalid response"})
@@ -115,11 +138,18 @@ func (h *handler) reloginFinish(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 403, map[string]string{"error": "Open relogin again in this browser"})
 		return
 	}
+	key := id
+	if add {
+		key = "add:grok:" + body.State
+	} else if _, err := uuid.Parse(id); err != nil {
+		writeJSON(w, 404, map[string]string{"error": "Unknown credential"})
+		return
+	}
 	h.relogins.mu.Lock()
-	a, found := h.relogins.byID[id]
+	a, found := h.relogins.byID[key]
 	valid := found && time.Now().Before(a.deadline) && browser.Value == a.browser && body.State == a.state
 	if valid {
-		delete(h.relogins.byID, id)
+		delete(h.relogins.byID, key)
 	}
 	h.relogins.mu.Unlock()
 	if !valid {
@@ -134,6 +164,15 @@ func (h *handler) reloginFinish(w http.ResponseWriter, r *http.Request) {
 	fresh, err := a.exchange(u.String())
 	if err != nil {
 		writeJSON(w, 502, map[string]string{"error": "Provider rejected authorization. Start over."})
+		return
+	}
+	if add {
+		if fresh.ProviderName() != "grok" || store.Save(fresh) != nil {
+			writeJSON(w, 500, map[string]string{"error": "Could not save Grok credential"})
+			return
+		}
+		w.Header().Set("Cache-Control", "no-store")
+		writeJSON(w, 201, APILoginFinishResponse{Version: APIVersion, Credential: toAPICredential(fresh, h.cfg.Manager)})
 		return
 	}
 	err = store.WithCredentialLock(id, func() error {

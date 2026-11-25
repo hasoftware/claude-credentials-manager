@@ -195,7 +195,7 @@ func (s *AdminSSO) Protect(next http.Handler) http.Handler {
 			clearAdminCookie(w, sessionName)
 			http.Redirect(w, r, "/signed-out", 303)
 			return
-		case "/static/style.css", "/static/design.css":
+		case "/static/style.css", "/static/design.css", "/static/fonts/inter-latin-wght-normal.woff2", "/static/fonts/inter-vietnamese-wght-normal.woff2":
 			if r.Method != http.MethodGet && r.Method != http.MethodHead {
 				http.Error(w, "Use GET", http.StatusMethodNotAllowed)
 				return
