@@ -129,7 +129,7 @@ func (s *AdminSSO) start(w http.ResponseWriter, r *http.Request) {
 		a.Account = r.URL.Query().Get("account")
 	}
 	switch strings.TrimSuffix(r.URL.Path, "/") {
-	case "/accounts", "/tutorial":
+	case "/accounts", "/tutorial", "/system":
 		a.ReturnPath = strings.TrimSuffix(r.URL.Path, "/")
 	}
 	s.set(w, flowName, a)
@@ -169,7 +169,7 @@ func (s *AdminSSO) callback(w http.ResponseWriter, r *http.Request) {
 	}
 	s.set(w, sessionName, loginCookie{Subject: id.Subject, Expiry: expiry.Unix()})
 	target := "/"
-	if a.ReturnPath == "/accounts" || a.ReturnPath == "/tutorial" {
+	if a.ReturnPath == "/accounts" || a.ReturnPath == "/tutorial" || a.ReturnPath == "/system" {
 		target = a.ReturnPath
 	}
 	if a.Account != "" {

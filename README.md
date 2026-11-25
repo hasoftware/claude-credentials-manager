@@ -443,3 +443,11 @@ For every command, flag, and environment variable in exhaustive detail, see `man
 ## License
 
 MIT — see [LICENSE](LICENSE). Originally created by [hbinhng](https://github.com/hbinhng).
+
+### System monitor
+
+On a Linux systemd host, install the built CCM2 Linux executable at `/usr/local/bin/ccm2-monitor`. Create `/var/lib/ccm/.ccm/monitor` with mode 0700 and owner `ccm:ccm`, install `deploy/ccm-monitor.service` in `/etc/systemd/system`, run `systemctl daemon-reload`, then `systemctl enable --now ccm-monitor`. The admin and monitor services must use the same CCM data directory. The supplied unit targets the HASOFT container with its primary and staging gateways on ports 17879 and 17878. Omit CCM_MONITOR_STAGING on installations without staging.
+
+Open **System** to inspect service state, local tunnel readiness, host resources and observed gateway source addresses. System sampling runs every 15 seconds. Recent peers are retained for up to 24 hours (latest 200 entries), and incident history retains the latest 50 transitions. Provider checks run approximately every five minutes and query the current access token without renewing it. A 401 indicates that the provider rejected that credential; token expiry alone does not establish that refresh will fail.
+
+In **System → Settings**, optionally configure a Telegram bot and chat ID and enable notifications. For a tunnel-wide inventory, provide the Cloudflare account and tunnel IDs and a read-scoped API token. The cloudflared run token is a separate credential. The panel also counts distinct session IDs with recorded gateway usage in the last 15 minutes, independently of sampled IP addresses. Other connector IDs and client CIDRs can be marked as trusted. These settings control alerts only. The local watcher can monitor an admin service outage while the container is up; detecting loss of the container itself requires an external observer.

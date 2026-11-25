@@ -6,6 +6,7 @@
 <nav class="panel-nav" aria-label="CCM2">
   <a href="/" {{if eq .Title "Dashboard"}}aria-current="page"{{end}}>Dashboard</a>
   <a href="/accounts" {{if eq .Title "Accounts"}}aria-current="page"{{end}}>Accounts</a>
+  <a href="/system" {{if eq .Title "System"}}aria-current="page"{{end}}>System</a>
   <a href="/tutorial" {{if eq .Title "Tutorial"}}aria-current="page"{{end}}>Tutorial</a>
 </nav>
 {{if eq .Title "Dashboard"}}
@@ -30,6 +31,33 @@
 {{else if eq .Title "Accounts"}}
 <div id="app"></div>
 <script src="/static/app.js" defer></script>
+{{else if eq .Title "System"}}
+<header class="card-header"><div><h1 class="card-title">System</h1><p class="card-description" id="monitor-time" role="status">Loading monitor status…</p></div><a class="btn" href="#monitor-settings" id="settings-link">Settings</a></header>
+<div id="monitor-status"></div>
+<details id="monitor-settings" class="report-panel"><summary>Monitoring settings</summary>
+  <form id="monitor-form">
+  <fieldset><legend>Telegram alerts</legend>
+    <label><input name="Telegram" type="checkbox"> Send incident and recovery notifications</label>
+    <label>Chat ID <input class="input" name="ChatID" autocomplete="off"></label>
+    <label>Bot token <input class="input" type="password" name="BotToken" autocomplete="new-password"></label>
+    <label><input type="checkbox" name="ClearBot"> Remove stored bot token</label>
+  </fieldset>
+  <fieldset><legend>Cloudflare connector inventory</legend>
+    <p>To list replicas across the entire tunnel, use an account API token with Cloudflare Tunnel Read permission.</p>
+    <label>Account ID <input class="input" name="AccountID" autocomplete="off"></label>
+    <label>Tunnel ID <input class="input" name="TunnelID" autocomplete="off"></label>
+    <label>Read token <input class="input" type="password" name="CloudToken" autocomplete="new-password"></label>
+    <label><input type="checkbox" name="ClearCloud"> Disconnect the Cloudflare inventory API</label>
+    <label>Trusted remote connector IDs <textarea class="input" name="TrustedConnectors" placeholder="One UUID per line"></textarea></label>
+    <p>The local connector is recognized automatically. Other active IDs trigger an alert unless listed here.</p>
+  </fieldset>
+  <fieldset><legend>Gateway clients</legend>
+    <label>Trusted source networks <textarea class="input" name="TrustedNetworks" placeholder="One CIDR per line, e.g. 10.0.28.106/32"></textarea></label>
+    <p>Leave empty to observe all peers. With a list, the monitor flags addresses outside those networks. This setting only monitors access.</p>
+  </fieldset>
+  <div class="monitor-actions"><button class="btn primary" id="monitor-save" type="submit" disabled>Save settings</button><button class="btn" type="button" id="monitor-test" disabled>Send test message</button></div>
+  <p id="monitor-feedback" role="status"></p></form>
+</details><script src="/static/system.js" defer></script>
 {{else}}
 <article class="tutorial" lang="vi">
   <header class="card-header"><div><h1 class="card-title">Tutorial</h1><p class="card-description">Hướng dẫn quản lý tài khoản và theo dõi gateway CCM2.</p></div></header>

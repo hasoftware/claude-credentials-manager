@@ -258,6 +258,10 @@ func NewHandler(cfg ServerConfig) (http.Handler, error) {
 	// Authenticated JSON API.
 	mux.HandleFunc("POST /api/credentials/{id}/relogin/start", h.protected(h.reloginStart))
 	mux.HandleFunc("POST /api/credentials/{id}/relogin/finish", h.protected(h.reloginFinish))
+	mux.HandleFunc("GET /api/system", h.protected(h.monitorStatus))
+	mux.HandleFunc("GET /api/system/settings", h.protected(h.monitorConfig))
+	mux.HandleFunc("POST /api/system/settings", h.protected(h.monitorConfig))
+	mux.HandleFunc("POST /api/system/telegram/test", h.protected(h.monitorTest))
 	mux.HandleFunc("GET /api/usage", h.protected(h.apiUsage))
 	mux.HandleFunc("GET /api/credentials", h.protected(h.apiListCredentials))
 	mux.HandleFunc("GET /api/credentials/{id}", h.protected(h.apiGetCredential))
@@ -411,6 +415,8 @@ func (h *handler) appShell(w http.ResponseWriter, r *http.Request) {
 		title = "Accounts"
 	case "/tutorial":
 		title = "Tutorial"
+	case "/system":
+		title = "System"
 	}
 	_ = h.pages.app.ExecuteTemplate(w, "layout", templateData{Title: title, SSO: h.cfg.SSO})
 }

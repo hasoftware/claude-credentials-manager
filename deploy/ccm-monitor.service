@@ -1,0 +1,23 @@
+[Unit]
+Description=HASOFT CCM2 system monitor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=ccm
+Group=ccm
+WorkingDirectory=/var/lib/ccm
+Environment=HOME=/var/lib/ccm
+Environment=CCM_MONITOR_STAGING=1
+ExecStart=/usr/local/bin/ccm2-monitor monitor
+Restart=on-failure
+RestartSec=10
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/ccm/.ccm/monitor
+
+[Install]
+WantedBy=multi-user.target
