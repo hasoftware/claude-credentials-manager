@@ -26,18 +26,16 @@
   function renderShell() {
     appRoot.innerHTML = [
       '<div class="card">',
-      '  <div class="card-header">',
-      '    <div>',
-      '      <div class="title-row">',
-      '        <h2 class="card-title">Accounts</h2>',
-      '        <button class="btn icon" id="add-credential-btn" type="button" aria-label="Add credential" title="Add credential">' + ICON_PLUS + '</button>',
-      '      </div>',
-      '      <p class="card-description">Manage gateway accounts and renew provider access.</p>',
-      '    </div>',
-      '    <div class="card-toolbar">',
-      '      <span class="muted" id="last-updated">loading…</span>',
-      '    </div>',
-      '  </div>',
+      '  <header class="card-header"><div>',
+      '    <h1 class="card-title">Accounts</h1>',
+      '    <p class="card-description">Manage gateway accounts and renew provider access.</p>',
+      '  </div><button class="btn primary" id="add-credential-btn" type="button">' + ICON_PLUS + ' Add credential</button></header>',
+      '  <dl class="metrics" aria-label="Account overview">',
+      '    <div><dt>Credentials</dt><dd id="metric-total">—</dd></div>',
+      '    <div><dt>Expired tokens</dt><dd id="metric-expired">—</dd></div>',
+      '    <div><dt>Dashboard shares</dt><dd id="metric-shared">—</dd></div>',
+      '  </dl>',
+      '  <div class="list-header"><h2>Credentials</h2><span id="last-updated" class="muted">Loading…</span></div>',
       '  <div id="table-mount"></div>',
       '</div>',
       '<div id="toast-root"></div>',
@@ -50,9 +48,13 @@
 
   function renderTable(creds) {
     var mount = document.getElementById("table-mount");
-    if (!creds || creds.length === 0) {
+    creds = creds || [];
+    document.getElementById("metric-total").textContent = String(creds.length);
+    document.getElementById("metric-expired").textContent = String(creds.filter(function (c) { return c.credStatus === "expired"; }).length);
+    document.getElementById("metric-shared").textContent = String(creds.filter(function (c) { return c.session; }).length);
+    if (creds.length === 0) {
       mount.innerHTML =
-        '<div class="empty">No credentials in the local store. Click + to add one.</div>';
+        '<div class="empty">No credentials in the local store. Use Add credential to connect an account.</div>';
       return;
     }
     var rows = creds.map(rowHTML).join("");
@@ -93,10 +95,10 @@
     return (
       '<tr data-id="' + attr(c.id) + '">' +
         '<td class="name">' + escapeHTML(c.name || c.id.slice(0, 8)) + ' <span class="muted">' + escapeHTML(c.provider || '') + '</span></td>' +
-        '<td class="tier">' + tier + '</td>' +
-        '<td>' + credBadge + '</td>' +
-        '<td>' + sessionCell + '</td>' +
-        '<td>' + usageBtn + '</td>' +
+        '<td class="tier" data-label="Tier">' + tier + '</td>' +
+        '<td data-label="Token expiry">' + credBadge + '</td>' +
+        '<td data-label="Dashboard share">' + sessionCell + '</td>' +
+        '<td data-label="Usage">' + usageBtn + '</td>' +
         '<td class="actions">' + actionBtns + '</td>' +
       '</tr>'
     );
@@ -113,7 +115,7 @@
         '<button class="btn sm" data-action="refresh" data-id="' + attr(c.id) + '">Refresh</button>';
     } else {
       buttons =
-        '<button class="btn sm primary" data-action="start-tunnel" data-id="' + attr(c.id) + '">Start tunnel</button>' +
+        '<button class="btn sm" data-action="start-tunnel" data-id="' + attr(c.id) + '">Start tunnel</button>' +
         '<button class="btn sm" data-action="start-lan" data-id="' + attr(c.id) + '">Start LAN</button>';
     }
     if (c.provider === "grok" || c.provider === "codex") {

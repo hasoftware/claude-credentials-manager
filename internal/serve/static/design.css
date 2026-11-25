@@ -1,0 +1,29 @@
+/* HASOFT web palette and type scale, derived from DESIGN.md. */
+:root {
+  color-scheme: light;
+  --canvas: #faf9f5;
+  --ink: #141413;
+  --body: #3d3d3a;
+  --muted-ink: #6c6a64;
+  --line: #e6dfd8;
+  --paper: #f5f0e8;
+  --card-paper: #efe9de;
+  --dark: #181715;
+  --coral: #cc785c;
+  --coral-active: #a9583e;
+  --display: Copernicus, "Tiempos Headline", Georgia, Garamond, serif;
+  --sans: StyreneB, Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+.brand-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  min-height: 64px; border-bottom: 1px solid var(--line);
+}
+.brand {display: inline-flex; align-items: center; gap: 10px; color: var(--ink); font: 600 16px/1 var(--sans); letter-spacing: .045em}
+.brand-mark {
+  width: 29px; height: 29px; display: inline-grid; place-items: center;
+  background: var(--ink); color: var(--canvas); border-radius: 6px;
+  font: italic 22px/1 Georgia, serif; letter-spacing: -2px; padding-right: 3px;
+}
+.brand-product {border-left: 1px solid #c7beb0; padding-left: 12px; margin-left: 2px; color: var(--muted-ink); font: 500 14px/1.25 var(--sans); letter-spacing: 0}
+:focus-visible {outline: 2px solid var(--coral-active); outline-offset: 3px}

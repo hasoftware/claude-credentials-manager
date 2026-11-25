@@ -185,9 +185,17 @@ func (s *AdminSSO) Protect(next http.Handler) http.Handler {
 			clearAdminCookie(w, sessionName)
 			http.Redirect(w, r, "/signed-out", 303)
 			return
+		case "/static/style.css", "/static/design.css":
+			if r.Method != http.MethodGet && r.Method != http.MethodHead {
+				http.Error(w, "Use GET", http.StatusMethodNotAllowed)
+				return
+			}
+			next.ServeHTTP(w, r)
+			return
 		case "/signed-out":
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			fmt.Fprint(w, `<p>Signed out of CCM2. <a href="/">Sign in</a></p>`)
+			page, _ := templatesFS.ReadFile("templates/signedout.html")
+			_, _ = w.Write(page)
 			return
 		}
 		if a, ok := s.read(r, sessionName); !ok || a.Subject == "" {

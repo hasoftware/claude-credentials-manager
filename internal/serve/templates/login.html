@@ -1,10 +1,11 @@
 {{define "body"}}
+<header class="brand-bar"><div class="brand"><span class="brand-mark" aria-hidden="true">H</span><span>HASOFT</span><span class="brand-product">CCM2</span></div></header>
 <section class="login">
   <h2>Admin token required</h2>
   <form method="post" action="/login">
     <label class="field-label" for="login-token">Token</label>
     <input id="login-token" type="password" name="token" autofocus required autocomplete="off">
-    <button type="submit" class="btn primary" style="margin-top: 1rem;">Sign in</button>
+    <button type="submit" class="btn primary" style="margin-top: 16px">Sign in</button>
   </form>
 </section>
 {{end}}
