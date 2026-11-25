@@ -18,6 +18,7 @@ import (
 	"github.com/google/uuid"
 	codexoauth "github.com/hasoftware/claude-credentials-manager/v2/internal/codex/oauth"
 	"github.com/hasoftware/claude-credentials-manager/v2/internal/credflow"
+	grokoauth "github.com/hasoftware/claude-credentials-manager/v2/internal/grok/oauth"
 	"github.com/hasoftware/claude-credentials-manager/v2/internal/oauth"
 	"github.com/hasoftware/claude-credentials-manager/v2/internal/share"
 	"github.com/hasoftware/claude-credentials-manager/v2/internal/store"
@@ -102,6 +103,17 @@ func codexLoginBegin() (authorizeURL string, pkce *codexoauth.PKCEParams, err er
 // "save credentials" if the persist step fails (same convention as the
 // claude flow in credflow.CompleteLogin).
 func codexLoginFinish(redirectURL string, pkce *codexoauth.PKCEParams) (*store.Credential, error) {
+	cred, err := exchangeCodexLogin(redirectURL, pkce)
+	if err != nil {
+		return nil, err
+	}
+	if err = store.Save(cred); err != nil {
+		return nil, fmt.Errorf("save credentials: %w", err)
+	}
+	return cred, nil
+}
+
+func exchangeCodexLogin(redirectURL string, pkce *codexoauth.PKCEParams) (*store.Credential, error) {
 	code, state, err := codexoauth.ExportedParseCallbackURL(redirectURL)
 	if err != nil {
 		return nil, err
@@ -144,9 +156,6 @@ func codexLoginFinish(redirectURL string, pkce *codexoauth.PKCEParams) (*store.C
 		LastRefresh:  now.Format(time.RFC3339Nano),
 		Subscription: store.Subscription{Tier: tier},
 	}
-	if err := store.Save(cred); err != nil {
-		return nil, fmt.Errorf("save credentials: %w", err)
-	}
 	return cred, nil
 }
 
@@ -164,6 +173,7 @@ const APIVersion = 1
 
 // ServerConfig configures NewHandler.
 type ServerConfig struct {
+	SSO      bool
 	Manager  *Manager
 	Token    string // admin token; ignored when Loopback is true
 	Loopback bool   // when true, auth middleware bypasses
@@ -232,9 +242,9 @@ func NewHandler(cfg ServerConfig) (http.Handler, error) {
 		return nil, err
 	}
 	h := &handler{
-		cfg:            cfg,
-		pages:          tpls,
-		handshakes:     newHandshakeStore(),
+		cfg:             cfg,
+		pages:           tpls,
+		handshakes:      newHandshakeStore(),
 		codexHandshakes: newCodexHandshakeMap(),
 	}
 
@@ -246,6 +256,8 @@ func NewHandler(cfg ServerConfig) (http.Handler, error) {
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticSub()))))
 
 	// Authenticated JSON API.
+	mux.HandleFunc("POST /api/credentials/{id}/relogin/start", h.protected(h.reloginStart))
+	mux.HandleFunc("POST /api/credentials/{id}/relogin/finish", h.protected(h.reloginFinish))
 	mux.HandleFunc("GET /api/credentials", h.protected(h.apiListCredentials))
 	mux.HandleFunc("GET /api/credentials/{id}", h.protected(h.apiGetCredential))
 	mux.HandleFunc("POST /api/credentials/{id}", h.protected(h.apiStartSession))
@@ -274,6 +286,7 @@ func NewHandler(cfg ServerConfig) (http.Handler, error) {
 }
 
 type handler struct {
+	relogins        reloginRegistry
 	cfg             ServerConfig
 	pages           *pages
 	handshakes      *handshakeStore
@@ -297,6 +310,7 @@ func (h *handler) Close() error {
 // templates. The SPA pulls all live data through the JSON API, so
 // there is no credential / session state to thread through here.
 type templateData struct {
+	SSO   bool
 	Title string
 }
 
@@ -387,7 +401,7 @@ func (h *handler) loginPOST(w http.ResponseWriter, r *http.Request) {
 // via /api/credentials on boot; the shell is cacheable and contains
 // nothing user-specific.
 func (h *handler) appShell(w http.ResponseWriter, _ *http.Request) {
-	_ = h.pages.app.ExecuteTemplate(w, "layout", templateData{Title: "Sessions"})
+	_ = h.pages.app.ExecuteTemplate(w, "layout", templateData{Title: "Accounts", SSO: h.cfg.SSO})
 }
 
 // ---- JSON API ----------------------------------------------------
@@ -402,6 +416,7 @@ type APIListResponse struct {
 // omits quota — quota is fetched on demand via GET /api/credentials/{id}
 // so the list poll stays cheap.
 type APICredential struct {
+	Provider   string      `json:"provider"`
 	ID         string      `json:"id"`
 	Name       string      `json:"name"`
 	Tier       string      `json:"tier"`       // empty string when missing
@@ -740,6 +755,7 @@ func (h *handler) apiLoginCodexFinish(w http.ResponseWriter, r *http.Request) {
 // into the list-response shape.
 func toAPICredential(c *store.Credential, mgr *Manager) APICredential {
 	out := APICredential{
+		Provider:   c.ProviderName(),
 		ID:         c.ID,
 		Name:       c.Name,
 		Tier:       c.Subscription.Tier,
@@ -785,7 +801,9 @@ func fetchQuota(c *store.Credential) APIQuota {
 			accountID = c.Tokens.AccountID
 		}
 		u = codexoauth.FetchUsageFn(c.AccessToken(), accountID)
-	default: // "claude" and anything else falls through to claude path
+	case "grok":
+		u = grokoauth.FetchUsageFn(c.AccessToken())
+	default:
 		u = oauth.FetchUsageFn(c.AccessToken())
 	}
 	out := APIQuota{Fetched: true}

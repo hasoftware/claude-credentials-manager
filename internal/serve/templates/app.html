@@ -1,4 +1,5 @@
 {{define "body"}}
+<header class="admin-bar"><strong>HASOFT <span> / </span> CCM2</strong>{{if .SSO}}<form action="/auth/logout" method="post"><button class="btn ghost sm" type="submit">Sign out</button></form>{{end}}</header>
 <div id="app"></div>
 <script src="/static/app.js" defer></script>
 {{end}}

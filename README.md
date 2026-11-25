@@ -247,6 +247,21 @@ ccm ticket --from-endpoint https://abc.trycloudflare.com \
 
 Both flags required. The endpoint must be a full URL with `http`/`https` scheme and host only — no path, query, fragment, or userinfo. The token must consist only of unreserved URL bytes (`[A-Za-z0-9._~-]`); standard base64 (`+`, `/`, `=`) is rejected because those bytes do not survive userinfo encoding losslessly.
 
+### Admin SSO and web relogin
+
+Use `ccm serve --sso --bind-host 127.0.0.1 --bind-port 7878` behind an HTTPS reverse proxy on the same host. Run the dashboard as the same OS user and with the same `CCM_HOME` as the gateway. Configure the private environment file for the service:
+
+| Setting | Value |
+| --- | --- |
+| `CCM_ADMIN_ORIGIN` | Public HTTPS origin of the dashboard |
+| `CCM_OIDC_ISSUER` | OIDC discovery issuer for your organization |
+| `CCM_OIDC_CLIENT_ID`, `CCM_OIDC_CLIENT_SECRET` | Confidential web application credentials from the issuer |
+| `CCM_ADMIN_EMAILS` or `CCM_ADMIN_SUBJECTS` | Comma-separated list of approved verified email addresses or issuer subject IDs |
+
+Register the exact redirect URI `https://<admin-host>/auth/callback` with the issuer. Proxy the whole origin to the loopback service, including `/auth/` and `/api/`. SSO mode requires an explicit allowlist and fails closed if configuration or discovery fails. Signing out clears the current browser session; restarting the service invalidates all dashboard sessions.
+
+On **Accounts**, use **Relogin** beside the Codex or Grok account. Authorize on the provider’s page and paste the complete provider callback URL into that same dashboard dialog. Confirming updates the existing credential ID for the running gateway. The token expiry column uses the stored expiration timestamp; an upstream may revoke access earlier. Dashboard share status covers sessions started from this dashboard. A separately managed systemd gateway is independent.
+
 ### `ccm serve`
 
 Run a local HTTP dashboard that manages multiple concurrent `ccm share` sessions in-process. Useful when you want to hand out tickets to several teammates (or several containers on the same host) without keeping multiple `ccm share` terminals open.

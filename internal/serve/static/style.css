@@ -2,6 +2,10 @@
    Tokens mirror shadcn/ui's `new-york` variant with `--radius: 0.5rem`.
    Authored by hand (no framework, no build step). */
 
+.admin-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.4rem; }
+.admin-bar strong { font-size:1rem; letter-spacing:.035em; }
+.admin-bar span { color:var(--muted-foreground); padding:0 .35rem; }
+
 :root {
   color-scheme: dark;
 

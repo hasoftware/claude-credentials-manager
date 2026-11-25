@@ -25,6 +25,7 @@ import (
 
 func init() {
 	rootCmd.AddCommand(serveCmd)
+	serveCmd.Flags().Bool("sso", false, "require OpenID Connect for every web page and API route")
 	serveCmd.Flags().String("bind-host", "", "literal listener bind address (empty = 127.0.0.1)")
 	serveCmd.Flags().String("bind-port", "7878", "port to bind")
 }
@@ -58,6 +59,17 @@ func runServe(cmd *cobra.Command, _ []string) error {
 	}
 
 	loopback := isLoopbackHost(bindHost)
+	useSSO, _ := cmd.Flags().GetBool("sso")
+	var sso *serve.AdminSSO
+	if useSSO {
+		if !loopback {
+			return errors.New("SSO dashboard must bind to loopback behind an HTTPS reverse proxy")
+		}
+		sso, err = serve.NewAdminSSO(context.Background())
+		if err != nil {
+			return err
+		}
+	}
 	token, err := resolveToken(loopback)
 	if err != nil {
 		return err
@@ -72,6 +84,7 @@ func runServe(cmd *cobra.Command, _ []string) error {
 	mgr := serve.NewManager(share.DefaultStarter, os.Stderr)
 	handler, err := serveNewHandlerFn(serve.ServerConfig{
 		Manager:  mgr,
+		SSO:      useSSO,
 		Token:    token,
 		Loopback: loopback,
 	})
@@ -84,9 +97,17 @@ func runServe(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return fmt.Errorf("listen: %w", err)
 	}
-	srv := &http.Server{Handler: handler}
+	var web http.Handler = handler
+	if sso != nil {
+		web = sso.Protect(handler)
+	}
+	srv := &http.Server{Handler: web, ReadHeaderTimeout: 10 * time.Second}
 
-	printServeBanner(ln.Addr().String(), token, loopback)
+	if useSSO {
+		fmt.Fprintln(os.Stderr, "SSO dashboard listening on", ln.Addr())
+	} else {
+		printServeBanner(ln.Addr().String(), token, loopback)
+	}
 
 	errCh := make(chan error, 1)
 	go func() { errCh <- srv.Serve(ln) }()

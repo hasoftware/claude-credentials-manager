@@ -54,7 +54,12 @@ func Login(ctx context.Context, stdout io.Writer, stdin io.Reader) (*store.Crede
 		return nil, ErrStateMismatch
 	}
 
-	tr, err := ExchangeCode(code, pkce.Verifier, redirectURI)
+	return CompleteCode(code, pkce.Verifier, redirectURI)
+}
+
+// CompleteCode exchanges a validated authorization code for an unsaved credential.
+func CompleteCode(code, verifier, redirectURI string) (*store.Credential, error) {
+	tr, err := ExchangeCode(code, verifier, redirectURI)
 	if err != nil {
 		return nil, err
 	}

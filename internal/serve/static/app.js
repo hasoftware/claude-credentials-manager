@@ -29,10 +29,10 @@
       '  <div class="card-header">',
       '    <div>',
       '      <div class="title-row">',
-      '        <h2 class="card-title">Sessions</h2>',
+      '        <h2 class="card-title">Accounts</h2>',
       '        <button class="btn icon" id="add-credential-btn" type="button" aria-label="Add credential" title="Add credential">' + ICON_PLUS + '</button>',
       '      </div>',
-      '      <p class="card-description">Manage shared credential sessions. Auto-refreshes every 3 s.</p>',
+      '      <p class="card-description">Manage gateway accounts and renew provider access.</p>',
       '    </div>',
       '    <div class="card-toolbar">',
       '      <span class="muted" id="last-updated">loading…</span>',
@@ -61,8 +61,8 @@
         '<thead><tr>' +
           '<th>Name</th>' +
           '<th>Tier</th>' +
-          '<th>Status</th>' +
-          '<th>Session</th>' +
+          '<th>Token expiry</th>' +
+          '<th>Dashboard share</th>' +
           '<th>Usage</th>' +
           '<th class="actions">Actions</th>' +
         '</tr></thead>' +
@@ -92,7 +92,7 @@
     var actionBtns = actionButtonsHTML(c);
     return (
       '<tr data-id="' + attr(c.id) + '">' +
-        '<td class="name">' + escapeHTML(c.name || c.id.slice(0, 8)) + '</td>' +
+        '<td class="name">' + escapeHTML(c.name || c.id.slice(0, 8)) + ' <span class="muted">' + escapeHTML(c.provider || '') + '</span></td>' +
         '<td class="tier">' + tier + '</td>' +
         '<td>' + credBadge + '</td>' +
         '<td>' + sessionCell + '</td>' +
@@ -116,6 +116,9 @@
         '<button class="btn sm primary" data-action="start-tunnel" data-id="' + attr(c.id) + '">Start tunnel</button>' +
         '<button class="btn sm" data-action="start-lan" data-id="' + attr(c.id) + '">Start LAN</button>';
     }
+    if (c.provider === "grok" || c.provider === "codex") {
+      buttons += '<button class="btn sm" data-action="relogin" data-id="' + attr(c.id) + '">Relogin</button>';
+    }
     return '<span class="actions-group">' + buttons + '</span>';
   }
 
@@ -130,6 +133,7 @@
           var action = btn.getAttribute("data-action");
           var cred = byID[id];
           switch (action) {
+            case "relogin":       return openRelogin(cred);
             case "usage":         return openUsageDialog(cred);
             case "ticket":        return openTicketDialog(cred);
             case "start-tunnel":  return startSession(cred, { mode: "tunnel" });
@@ -396,7 +400,15 @@
 
   // renderCodexLoginStep2 swaps the dialog body to the authorize-URL +
   // paste-redirect-URL form (Codex flow) once the PKCE handshake is ready.
-  function renderCodexLoginStep2(dlg, start) {
+  function openRelogin(cred) {
+    var base = "/api/credentials/" + encodeURIComponent(cred.id) + "/relogin/";
+    var dlg = dialog({title: "Relogin · " + cred.provider, description: "Sign in again to renew " + (cred.name || cred.id), body: "", footer: [{label:"Close", ghost:true, action:"close"}]});
+    dlg.addEventListener("close", function () { dlg.remove(); });
+    renderLoginLoading(dlg, "Opening authorization…");
+    postJSON(base+"start", null).then(function(start){renderCodexLoginStep2(dlg,start,base+"finish");}).catch(function(err){dlg.close();toast("Relogin failed", err.message, "destructive");});
+  }
+
+  function renderCodexLoginStep2(dlg, start, finishURL) {
     var bodyEl = dlg.querySelector(".dialog-body");
     bodyEl.innerHTML =
       fieldBlock("Authorize URL", start.authorizeUrl, "auth-url") +
@@ -404,7 +416,7 @@
       '  <a class="btn primary" id="login-open-link" href="' + attr(start.authorizeUrl) + '" target="_blank" rel="noopener noreferrer">Open authorize page ↗</a>' +
       '</div>' +
       '<label class="field-label" for="login-redirect">Paste redirect URL</label>' +
-      '<input class="input" id="login-redirect" autocomplete="off" spellcheck="false" placeholder="http://localhost:1455/auth/callback?code=…">' +
+      '<input class="input" id="login-redirect" autocomplete="off" spellcheck="false" placeholder="Paste the full callback URL">' +
       '<div id="login-error" class="quota-error" style="display:none"></div>';
 
     var copyFields = bodyEl.querySelectorAll(".copy-field");
@@ -437,7 +449,7 @@
       input.disabled = true;
       errBox.style.display = "none";
       errBox.textContent = "";
-      postJSON("/api/login/codex/finish", { state: start.state, redirectUrl: redirectURL })
+      postJSON(finishURL || "/api/login/codex/finish", { state: start.state, redirectUrl: redirectURL })
         .then(function (resp) {
           dlg.close();
           var name = (resp && resp.credential && (resp.credential.name || resp.credential.id)) || "new credential";
