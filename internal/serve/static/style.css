@@ -80,7 +80,7 @@ dialog::backdrop {background:#18171570}
 .login h2 {margin-bottom:24px}
 .login input {margin-top:6px}
 .login button {width:100%}
-@media(max-width:850px){
+@media(max-width:960px){
   table,tbody,tr,td {display:block}
   table {border:none;overflow:visible}
   thead {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
@@ -136,11 +136,12 @@ dialog::backdrop {background:#18171570}
 
 .portal-list {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,285px),1fr));gap:16px}.portal-list h2{overflow-wrap:anywhere}.provider-label{text-transform:uppercase;letter-spacing:.08em;font-size:12px;color:var(--muted-ink);margin:0 0 12px}
 
-.account-quota {width:190px;max-width:100%;font-size:12px;line-height:1.45}
-.quota-line {display:grid;grid-template-columns:48px minmax(0,1fr);align-items:baseline;column-gap:8px}
-.quota-line + .quota-line {margin-top:7px}
-.quota-period {font-weight:600;color:var(--body)}
-.quota-reading {min-width:0}
+.provider-identity {display:inline-flex;align-items:center;gap:7px;white-space:nowrap;font-weight:600;color:var(--ink)}
+.provider-identity img {display:block;flex:none}
+.quota-heading,.quota-cell {width:140px}
+.quota-cell {vertical-align:top}
+@media(min-width:961px){td.actions .actions-group {max-width:195px} td.actions {text-align:right}}
+.quota-reading {min-width:0;font-size:12px;line-height:1.45}
 .quota-missing,.quota-reading small {color:var(--muted-ink)}
 .quota-percent {font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
 .quota-reading small {display:block;margin-top:4px;font-size:11px;line-height:1.35}
@@ -148,8 +149,10 @@ dialog::backdrop {background:#18171570}
 .quota-reading progress::-webkit-progress-bar {background:var(--card-paper)}
 .quota-reading progress::-webkit-progress-value {background:var(--coral-active);border-radius:5px}
 .quota-reading progress::-moz-progress-bar {background:var(--coral-active);border-radius:5px}
-@media(max-width:850px){
-  td[data-label="Provider quota"] {display:block;padding-block:12px;margin-block:6px;border-block:1px solid var(--line)}
-  td[data-label="Provider quota"]::before {display:block;margin-bottom:8px}
-  .account-quota {width:100%}
+@media(max-width:960px){
+  #table-mount tr {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px}
+  #table-mount td {grid-column:1/-1}
+  #table-mount td.name {margin:0;font-size:14px;overflow-wrap:anywhere}
+  #table-mount td.quota-cell {display:block;grid-column:span 1;width:auto;padding-top:10px;margin-top:6px;border-top:1px solid var(--line)}
+  td.quota-cell::before {display:block;margin-bottom:5px}
 }

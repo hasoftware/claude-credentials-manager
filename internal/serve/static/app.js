@@ -62,11 +62,12 @@
     mount.innerHTML =
       '<table>' +
         '<thead><tr>' +
+          '<th>Provider</th>' +
           '<th>Name</th>' +
           '<th>Tier</th>' +
           '<th>Token expiry</th>' +
           '<th>Dashboard share</th>' +
-          '<th>Provider quota</th>' +
+          '<th class="quota-heading">5 hours</th><th class="quota-heading">Weekly</th>' +
           '<th class="actions">Actions</th>' +
         '</tr></thead>' +
         '<tbody>' + rows + '</tbody>' +
@@ -80,6 +81,16 @@
     timeZone: "Asia/Ho_Chi_Minh", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
   });
 
+  var periods = [{key:"5h", label:"5 hours"}, {key:"7d", label:"Weekly"}];
+  var providerNames = new Map([["codex","Codex"], ["grok","Grok"], ["claude","Claude"]]);
+
+  function providerHTML(provider) {
+    var name = providerNames.get(provider);
+    if (!name) return escapeHTML(provider || "Unknown");
+    return '<span class="provider-identity"><img src="/static/providers/' + provider +
+      '.svg" width="20" height="20" alt=""><span>' + name + '</span></span>';
+  }
+
   function quotaLine(label, window) {
     var value = window && Number.isFinite(window.used) ? window.used : null;
     var missing = '<span class="quota-missing">Not reported</span>';
@@ -90,17 +101,31 @@
         '<progress max="100" value="' + Math.max(0, Math.min(100, value)) + '" aria-label="' + label + ' quota used"></progress>';
       if (Number.isFinite(reset)) detail += '<small>Resets ' + resetTime.format(reset) + ' ICT</small>';
     }
-    return '<div class="quota-line"><span class="quota-period">' + label + '</span><div class="quota-reading">' + detail + '</div></div>';
+    return detail;
   }
 
-  function quotaSummary(cred) {
+  function quotaSummary(cred, period) {
     if (cred.credStatus === "expired") return '<small>Token expired</small>';
     var q = quotaCache.get(cred.id)?.quota;
     if (!q) return '<small>Loading quota…</small>';
     if (!q.fetched || q.error) return '<small class="quota-error">Quota unavailable</small>';
     var windows = q.windows || [];
-    return quotaLine("5 hours", windows.find(w => w.name === "5h")) +
-      quotaLine("Weekly", windows.find(w => w.name === "7d" || w.name === "weekly"));
+    var window = windows.find(w => w.name === period.key || (period.key === "7d" && w.name === "weekly"));
+    return quotaLine(period.label, window);
+  }
+
+  function updateQuotaCells(cred) {
+    periods.forEach(function (period) {
+      var cell = document.getElementById("quota-" + period.key + "-" + cred.id);
+      if (cell) cell.innerHTML = quotaSummary(cred, period);
+    });
+  }
+
+  function quotaCells(cred) {
+    return periods.map(function (period) {
+      return '<td class="quota-cell" data-label="' + period.label + '"><div class="quota-reading" id="quota-' +
+        period.key + '-' + attr(cred.id) + '">' + quotaSummary(cred, period) + '</div></td>';
+    }).join("");
   }
 
   function fetchAccountQuota(id) {
@@ -125,8 +150,7 @@
         if (quotaCache.get(cred.id) !== entry) return;
         entry.quota = quota;
         entry.next = Date.now() + (quota?.fetched && !quota.error ? 300000 : 60000);
-        var cell = document.getElementById("quota-" + cred.id);
-        if (cell) cell.innerHTML = quotaSummary(cred);
+        updateQuotaCells(cred);
       });
     });
   }
@@ -148,11 +172,12 @@
     var actionBtns = actionButtonsHTML(c);
     return (
       '<tr data-id="' + attr(c.id) + '">' +
-        '<td class="name">' + escapeHTML(c.name || c.id.slice(0, 8)) + ' <span class="muted">' + escapeHTML(c.provider || '') + '</span></td>' +
+        '<td class="provider" data-label="Provider">' + providerHTML(c.provider) + '</td>' +
+        '<td class="name" data-label="Name">' + escapeHTML(c.name || c.id.slice(0, 8)) + '</td>' +
         '<td class="tier" data-label="Tier">' + tier + '</td>' +
         '<td data-label="Token expiry">' + credBadge + '</td>' +
         '<td data-label="Dashboard share">' + sessionCell + '</td>' +
-        '<td data-label="Provider quota"><div class="account-quota"><div id="quota-' + attr(c.id) + '">' + quotaSummary(c) + '</div></div></td>' +
+        quotaCells(c) +
         '<td class="actions">' + actionBtns + '</td>' +
       '</tr>'
     );
@@ -604,8 +629,7 @@
       .then(function (quota) {
         if (quota && lastCredentials?.some(c => c.id === cred.id && c.credStatus !== "expired")) {
           quotaCache.set(cred.id,{quota:quota,next:Date.now() + (quota.fetched && !quota.error ? 300000 : 60000)});
-          var cell=document.getElementById("quota-" + cred.id);
-          if (cell) cell.innerHTML=quotaSummary(cred);
+          updateQuotaCells(cred);
         }
         var bodyEl = dlg.querySelector(".dialog-body");
         bodyEl.innerHTML = "";
