@@ -119,6 +119,8 @@
     const map = node("div", undefined, "route-map");
     const hosts = node("ul", undefined, "route-hosts");
     hosts.setAttribute("aria-label", "Origins and their public hostnames");
+    const domains = node("ul", undefined, "public-domains");
+    domains.setAttribute("aria-label", "Public hostnames");
     for (const route of report.Routes) {
       const row = node("li");
       const item = node("div", undefined, "route-node route-origin");
@@ -127,13 +129,16 @@
         const [kind, address] = originLabel(origin);
         text.append(node("small", kind), node("strong", address, "origin-address"));
       }
-      const hostname = node(route.Web ? "a" : "span", route.Hostname, "route-hostname");
+      text.append(node("small", route.Hostname, "route-hostname"));
+      const hostname = node(route.Web ? "a" : "span", route.Hostname);
       if (route.Web) {
         hostname.href = "https://" + route.Hostname + "/";
         hostname.target = "_blank";
         hostname.rel = "noopener noreferrer";
       }
-      text.append(hostname);
+      const domain = node("li");
+      domain.append(hostname);
+      domains.append(domain);
       item.append(routeIcon("origin"), text);
       row.append(item);
       hosts.append(row);
@@ -143,7 +148,8 @@
     details.append(readiness(report.Tunnel));
     connector.append(details);
     const edge = routeStage("edge", "Cloudflare edge", report.Tunnel.Edges == null ? "Edge links unconfirmed" : report.Tunnel.Edges + " edge links", "route-edge");
-    const internet = routeStage("internet", "Internet", "Visitors", "route-internet");
+    const internet = routeStage("internet", "Internet", "Public hostnames", "route-internet");
+    internet.append(domains);
     map.append(hosts, connector, edge, internet);
     panel.append(map);
     return panel;

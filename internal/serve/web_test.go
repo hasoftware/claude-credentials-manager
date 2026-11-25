@@ -391,7 +391,7 @@ func TestAppShell(t *testing.T) {
 		{"/", "Dashboard", `src="/static/usage.js"`, `src="/static/app.js`},
 		{"/accounts", "Accounts", `id="app"`, `id="report-month"`},
 		{"/tutorial", "Tutorial", "ccm2 relogin --web codex", `src="/static/app.js`},
-		{"/system", "System", `src="/static/system.js?v=path2"`, `src="/static/app.js`},
+		{"/system", "System", `src="/static/system.js?v=domains1"`, `src="/static/app.js`},
 	} {
 		resp, err := http.Get(srv.URL + tt.path)
 		if err != nil {

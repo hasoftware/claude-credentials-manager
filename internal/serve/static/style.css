@@ -242,7 +242,7 @@ dialog::backdrop {background:#18171570}
 .route-map {
   --bridge:clamp(24px,2.6vw,48px);--branch-gap:12px;
   --wire:light-dark(#a2b1bf,#657482);--route-ink:light-dark(#285d80,#9ecfe9);
-  display:grid;grid-template-columns:minmax(0,1.5fr) var(--bridge) minmax(0,1.13fr) var(--bridge) minmax(0,.98fr) var(--bridge) minmax(0,.75fr);align-items:center;
+  display:grid;grid-template-columns:minmax(0,1.35fr) var(--bridge) minmax(0,1.1fr) var(--bridge) minmax(0,.9fr) var(--bridge) minmax(0,1.35fr);align-items:center;
   padding:clamp(14px,2vw,28px);border:1px solid var(--line);border-radius:12px;
   background-color:var(--paper);background-image:radial-gradient(light-dark(#d8d1c5,#393c35) 1px,transparent 1px);background-size:12px 12px;
 }
@@ -269,6 +269,10 @@ dialog::backdrop {background:#18171570}
 .route-edge,.route-internet {position:relative}
 .route-edge {grid-column:5}
 .route-internet {grid-column:7}
+.public-domains {grid-column:1/-1;list-style:none;margin:2px 0 0;padding:0;font-size:13px}
+.public-domains li {border-top:1px solid var(--line);padding:6px 0}
+.public-domains li:last-child {padding-bottom:0}
+.public-domains a {display:block;text-underline-offset:3px}
 .route-edge::before,.route-internet::before {content:"";position:absolute;right:100%;top:50%;width:var(--bridge);border-top:2px solid var(--wire)}
 .route-edge::after {content:"";position:absolute;right:calc(100% + 2px);top:calc(50% - 3px);width:6px;height:6px;border-top:2px solid var(--wire);border-right:2px solid var(--wire);transform:rotate(45deg)}
 .route-readiness {grid-column:2}
