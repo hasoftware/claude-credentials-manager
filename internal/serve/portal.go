@@ -13,11 +13,13 @@ import (
 
 // WithReloginPortal serves the provider reconnection UI on its own OIDC origin.
 // Only explicitly listed routes are available on that host.
-func WithReloginPortal(ctx context.Context, origin string, admin, inner http.Handler) (http.Handler, error) {
+func (s *AdminSSO) WithReloginPortal(ctx context.Context, origin string, inner http.Handler) (http.Handler, error) {
 	portal, err := newAdminSSO(ctx, strings.TrimRight(origin, "/"))
 	if err != nil {
 		return nil, err
 	}
+	portal.signouts = s.signouts
+	admin := s.Protect(inner)
 	u, _ := url.Parse(portal.origin)
 	if portal.origin == strings.TrimRight(os.Getenv("CCM_ADMIN_ORIGIN"), "/") {
 		return nil, fmt.Errorf("relogin portal needs its own origin")

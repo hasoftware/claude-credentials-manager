@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -26,18 +27,57 @@ type AdminSSO struct {
 	verifier         *oidc.IDTokenVerifier
 	origin           string
 	emails, subjects map[string]bool
+	logoutEndpoint   string
+	signouts         *adminSignouts
 	seal             cipher.AEAD
 }
 type loginCookie struct {
 	State, Nonce, Verifier string
 	ReturnPath             string `json:",omitempty"`
 	Account                string `json:",omitempty"`
+	SessionID              string `json:",omitempty"`
+	IssuedAt               int64  `json:",omitempty"`
 	Subject                string
 	Expiry                 int64
 }
 
 const sessionName = "__Host-ccm_admin"
 const flowName = "__Host-ccm_oidc"
+
+const adminSessionLifetime = 8 * time.Hour
+
+// Both web origins issue short-lived cookies for the same OIDC client. Track
+// sign-outs for their maximum lifetime so an already-open tab cannot reuse one.
+// A restart also discards the keys that could open those cookies.
+type adminSignouts struct {
+	mu sync.RWMutex
+	at map[string]time.Time
+}
+
+func (s *adminSignouts) revoke(id string) {
+	if id == "" {
+		return
+	}
+	now := time.Now()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for key, at := range s.at {
+		if !at.Add(adminSessionLifetime).After(now) {
+			delete(s.at, key)
+		}
+	}
+	if s.at == nil {
+		s.at = make(map[string]time.Time)
+	}
+	s.at[id] = now
+}
+
+func (s *adminSignouts) revoked(c loginCookie) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	at, ok := s.at[c.SessionID]
+	return ok && c.IssuedAt <= at.UnixNano()
+}
 
 func allowList(raw string, fold bool) map[string]bool {
 	m := make(map[string]bool)
@@ -81,6 +121,18 @@ func newAdminSSO(ctx context.Context, origin string) (*AdminSSO, error) {
 	if err != nil {
 		return nil, fmt.Errorf("SSO discovery: %w", err)
 	}
+	var discovery struct {
+		LogoutEndpoint string `json:"end_session_endpoint"`
+	}
+	if err := provider.Claims(&discovery); err != nil {
+		return nil, err
+	}
+	if discovery.LogoutEndpoint != "" {
+		u, err := url.Parse(discovery.LogoutEndpoint)
+		if err != nil || u.Scheme != "https" || u.Host == "" || u.User != nil || u.Fragment != "" {
+			return nil, errors.New("SSO logout endpoint must use HTTPS")
+		}
+	}
 	key := make([]byte, 32)
 	if _, err = rand.Read(key); err != nil {
 		return nil, err
@@ -93,14 +145,20 @@ func newAdminSSO(ctx context.Context, origin string) (*AdminSSO, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &AdminSSO{oauth: oauth2.Config{ClientID: client, ClientSecret: secret, Endpoint: provider.Endpoint(), RedirectURL: origin + "/auth/callback", Scopes: []string{oidc.ScopeOpenID, "email"}}, verifier: provider.Verifier(&oidc.Config{ClientID: client}), origin: origin, emails: emails, subjects: subjects, seal: seal}, nil
+	return &AdminSSO{oauth: oauth2.Config{ClientID: client, ClientSecret: secret, Endpoint: provider.Endpoint(), RedirectURL: origin + "/auth/callback", Scopes: []string{oidc.ScopeOpenID, "email"}}, verifier: provider.Verifier(&oidc.Config{ClientID: client}), origin: origin, emails: emails, subjects: subjects, seal: seal, logoutEndpoint: discovery.LogoutEndpoint, signouts: &adminSignouts{}}, nil
 }
 func (s *AdminSSO) set(w http.ResponseWriter, name string, data loginCookie) {
 	raw, _ := json.Marshal(data)
 	iv := make([]byte, s.seal.NonceSize())
 	_, _ = rand.Read(iv)
 	value := base64.RawURLEncoding.EncodeToString(s.seal.Seal(iv, iv, raw, []byte(name)))
-	http.SetCookie(w, &http.Cookie{Name: name, Value: value, Path: "/", HttpOnly: true, Secure: true, SameSite: http.SameSiteLaxMode, Expires: time.Unix(data.Expiry, 0)})
+	cookie := &http.Cookie{Name: name, Value: value, Path: "/", HttpOnly: true, Secure: true, SameSite: http.SameSiteLaxMode}
+	// A session-enabled issuer owns the browser's persistence choice. The
+	// expiry inside the sealed app cookie is always enforced on the server.
+	if name != sessionName || s.logoutEndpoint == "" {
+		cookie.Expires = time.Unix(data.Expiry, 0)
+	}
+	http.SetCookie(w, cookie)
 }
 func clearAdminCookie(w http.ResponseWriter, name string) {
 	http.SetCookie(w, &http.Cookie{Name: name, Path: "/", MaxAge: -1, HttpOnly: true, Secure: true, SameSite: http.SameSiteLaxMode})
@@ -156,18 +214,23 @@ func (s *AdminSSO) callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var c struct {
-		Email    string
-		Verified bool `json:"email_verified"`
+		SessionID string `json:"sid"`
+		Email     string
+		Verified  bool `json:"email_verified"`
 	}
 	if err = id.Claims(&c); err != nil || !(s.subjects[id.Subject] || (c.Verified && s.emails[strings.ToLower(c.Email)])) {
 		http.Error(w, "This account has no admin access", 403)
 		return
 	}
-	expiry := time.Now().Add(8 * time.Hour)
+	now := time.Now()
+	expiry := now.Add(adminSessionLifetime)
 	if id.Expiry.Before(expiry) {
 		expiry = id.Expiry
 	}
-	s.set(w, sessionName, loginCookie{Subject: id.Subject, Expiry: expiry.Unix()})
+	if c.SessionID == "" {
+		c.SessionID = oauth2.GenerateVerifier()
+	}
+	s.set(w, sessionName, loginCookie{Subject: id.Subject, SessionID: c.SessionID, IssuedAt: now.UnixNano(), Expiry: expiry.Unix()})
 	target := "/"
 	if a.ReturnPath == "/accounts" || a.ReturnPath == "/tutorial" || a.ReturnPath == "/system" {
 		target = a.ReturnPath
@@ -200,8 +263,15 @@ func (s *AdminSSO) Protect(next http.Handler) http.Handler {
 				http.Error(w, "Use POST", 405)
 				return
 			}
+			if c, ok := s.read(r, sessionName); ok {
+				s.signouts.revoke(c.SessionID)
+			}
 			clearAdminCookie(w, sessionName)
-			http.Redirect(w, r, "/signed-out", 303)
+			target := s.logoutEndpoint
+			if target == "" {
+				target = "/signed-out"
+			}
+			http.Redirect(w, r, target, http.StatusSeeOther)
 			return
 		case "/static/appearance.js", "/static/style.css", "/static/design.css", "/static/fonts/inter-latin-wght-normal.woff2", "/static/fonts/inter-vietnamese-wght-normal.woff2":
 			if r.Method != http.MethodGet && r.Method != http.MethodHead {
@@ -216,7 +286,7 @@ func (s *AdminSSO) Protect(next http.Handler) http.Handler {
 			_, _ = w.Write(page)
 			return
 		}
-		if a, ok := s.read(r, sessionName); !ok || a.Subject == "" {
+		if a, ok := s.read(r, sessionName); !ok || a.Subject == "" || s.signouts.revoked(a) {
 			if strings.HasPrefix(r.URL.Path, "/api/") {
 				writeJSON(w, 401, map[string]string{"error": "SSO login required"})
 				return

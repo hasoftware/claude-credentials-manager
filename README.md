@@ -251,6 +251,18 @@ Both flags required. The endpoint must be a full URL with `http`/`https` scheme 
 
 The CCM2 dashboard embeds the HASOFT theme from DESIGN.md. For a dedicated Dex v2.46.1 frontend, copy its stock web directory, overlay the two files from deploy/dex/templates into templates/, and place deploy/dex/theme/styles.css, internal/serve/static/design.css and internal/serve/static/appearance.js together in themes/hasoft/. Copy internal/serve/static/fonts into themes/hasoft/fonts for the self-hosted Inter typeface. Set frontend.dir to this web directory and frontend.theme to hasoft, then restart Dex.
 
+To offer **Remember this browser for 30 days** on the HASOFT password form, enable `DEX_SESSIONS_ENABLED=true` in the Dex service environment and use persistent Dex storage. Merge the following fields into its configuration. Generate a private 32-character cookie encryption key once (for example with `openssl rand -hex 16`) and put it in `sessions.cookieEncryptionKey` on the server. Preserve this key and the database across restarts.
+
+```yaml
+sessions:
+  cookieName: __Host-hasoft_sso
+  absoluteLifetime: 720h
+  validIfNotUsedFor: 720h
+  rememberMeCheckedByDefault: false
+```
+
+Restart Dex, then restart the CCM2 admin service so it discovers the issuer's logout endpoint. The form starts unchecked. Checking it lets Dex sign the browser back in for up to 30 days while CCM2 continues to validate each new short-lived dashboard session. Sign out of CCM2 and confirm at the identity provider to forget that browser.
+
 For the HASOFT tunnel deployment, point the SSO hostname at `http://127.0.0.1:5556`, run Caddy with `deploy/dex/Caddyfile`, and set Dex's `web.http` to `127.0.0.1:5557`. Set `CCM_RELOGIN_ORIGIN=https://sso.hoanganhdev.com` on the admin service and register that origin's `/auth/callback` as a second redirect URI for the CCM2 client. Configure the corresponding Host in the Caddyfile for your deployment. Dex handles provider discovery and HASOFT authentication. The portal shows only provider accounts and their reconnection flow.
 
 Run `ccm relogin` to choose a gateway account, or `ccm relogin --web <provider|id|name>` to open a matching account after HASOFT login. Multiple matches require a selection. Complete the provider's authorization and paste its full localhost callback into the portal. The server checks the callback and updates the existing credential. For a different deployment set CCM_RELOGIN_ORIGIN on the CLI as well.
