@@ -75,51 +75,76 @@
     return tunnel.Edges == null ? badge("Unconfirmed") : badge("Not ready", "bad");
   }
 
-  function routeIcon(tunnel) {
+  const routeIcons = {
+    origin: "M3 4h18v7H3zM3 13h18v7H3zM6 7.5h1m-1 9h1",
+    connector: "M3 20v-8a9 9 0 0 1 18 0v8m-14 0v-8a5 5 0 0 1 10 0v8M10 20v-7h4v7",
+    edge: "M6 18h12a4 4 0 0 0 0-8 6 6 0 0 0-11.7-1.2A4.6 4.6 0 0 0 6 18Z",
+    internet: "M21 12a9 9 0 1 1-18 0 9 9 0 1 1 18 0ZM3 12h18M12 3c5 5 5 13 0 18-5-5-5-13 0-18Z"
+  };
+
+  function routeIcon(kind) {
     const ns = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(ns, "svg");
     svg.setAttribute("viewBox", "0 0 24 24");
     svg.setAttribute("aria-hidden", "true");
     const path = document.createElementNS(ns, "path");
-    path.setAttribute("d", tunnel
-      ? "M3 20v-8a9 9 0 0 1 18 0v8m-14 0v-8a5 5 0 0 1 10 0v8M10 20v-7h4v7"
-      : "M21 12a9 9 0 1 1-18 0 9 9 0 1 1 18 0ZM3 12h18M12 3c5 5 5 13 0 18-5-5-5-13 0-18Z");
+    path.setAttribute("d", routeIcons[kind]);
     svg.append(path);
     return svg;
   }
 
+  function originLabel(origin) {
+    if (origin.Kind === "loopback" && origin.Address) {
+      const [scheme, authority] = origin.Address.split("://");
+      if (authority) return ["Localhost · " + scheme.toUpperCase(), authority];
+    }
+    const titles = {socket: "Unix socket", network: "Network service", "built-in": "Built-in response"};
+    return ["Origin", titles[origin.Kind] || "Origin unavailable"];
+  }
+
+  function routeStage(kind, label, note, className) {
+    const card = node("div", undefined, "route-node " + className);
+    const text = node("div");
+    text.append(node("strong", label), node("small", note));
+    card.append(routeIcon(kind), text);
+    return card;
+  }
+
   function routeMap(report) {
-    const panel = section("Tunnel routes", "Hostnames configured on this connector. Readiness is measured at the tunnel.");
+    const panel = section("Tunnel routes", "cloudflared opens an outbound tunnel to Cloudflare. Requests from the Internet travel back through it to the origin for each hostname.");
     if (!report.Routes?.length) {
       panel.append(badge(Array.isArray(report.Routes) ? "No hostname routes configured" : "Route data unavailable"));
       return panel;
     }
     const map = node("div", undefined, "route-map");
     const hosts = node("ul", undefined, "route-hosts");
-    hosts.setAttribute("aria-label", "Configured hostnames");
+    hosts.setAttribute("aria-label", "Origins and their public hostnames");
     for (const route of report.Routes) {
       const row = node("li");
-      const item = node("div", undefined, "route-node");
+      const item = node("div", undefined, "route-node route-origin");
       const text = node("div");
-      const label = node(route.Web ? "a" : "strong", route.Hostname);
-      if (route.Web) {
-        label.href = "https://" + route.Hostname + "/";
-        label.target = "_blank";
-        label.rel = "noopener noreferrer";
+      for (const origin of route.Origins?.length ? route.Origins : [{Kind: "unknown"}]) {
+        const [kind, address] = originLabel(origin);
+        text.append(node("small", kind), node("strong", address, "origin-address"));
       }
-      text.append(label, node("small", route.Web ? "Web application" : "Configured hostname"));
-      item.append(routeIcon(false), text);
+      const hostname = node(route.Web ? "a" : "span", route.Hostname, "route-hostname");
+      if (route.Web) {
+        hostname.href = "https://" + route.Hostname + "/";
+        hostname.target = "_blank";
+        hostname.rel = "noopener noreferrer";
+      }
+      text.append(hostname);
+      item.append(routeIcon("origin"), text);
       row.append(item);
       hosts.append(row);
     }
-    const tunnel = node("div", undefined, "route-node route-target");
-    const identity = node("div");
-    identity.append(node("strong", "Cloudflare Tunnel"), node("small", report.Host.Host));
+    const connector = routeStage("connector", "cloudflared", report.Host.Host, "route-target");
     const details = node("div", undefined, "route-readiness");
     details.append(readiness(report.Tunnel));
-    if (report.Tunnel.Edges != null) details.append(node("small", report.Tunnel.Edges + " edge links"));
-    tunnel.append(routeIcon(true), identity, details);
-    map.append(hosts, tunnel);
+    connector.append(details);
+    const edge = routeStage("edge", "Cloudflare edge", report.Tunnel.Edges == null ? "Edge links unconfirmed" : report.Tunnel.Edges + " edge links", "route-edge");
+    const internet = routeStage("internet", "Internet", "Visitors", "route-internet");
+    map.append(hosts, connector, edge, internet);
     panel.append(map);
     return panel;
   }

@@ -10,6 +10,7 @@ import (
 	"github.com/hasoftware/claude-credentials-manager/v2/internal/usage"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -131,7 +132,7 @@ func TestRecentUsageSessions(t *testing.T) {
 	}
 }
 
-func TestRouteMapPublishesOnlyHostnames(t *testing.T) {
+func TestRouteMapGroupsHostnames(t *testing.T) {
 	routes := parseTunnelRoutes(strings.NewReader(`{"config":{"ingress":[
 		{"hostname":"CCM.example.com","path":"/docs","service":"http://private:8787"},
 		{"hostname":"ccm.example.com.","service":"https://private:443","originRequest":{"httpHostHeader":"secret"}},
@@ -140,7 +141,7 @@ func TestRouteMapPublishesOnlyHostnames(t *testing.T) {
 		{"hostname":"docs.example.com","path":"/docs","service":"http://private"},
 		{"hostname":"user@invalid.test","service":"http://private"},
 		{"service":"http_status:404"}]}}`))
-	if len(routes) != 4 || routes[0] != (tunnelRoute{"ccm.example.com", true}) || routes[1].Web || routes[2].Web || routes[3].Web {
+	if len(routes) != 4 || routes[0].Hostname != "ccm.example.com" || !routes[0].Web || routes[1].Web || routes[2].Web || routes[3].Web {
 		t.Fatalf("routes = %+v", routes)
 	}
 	encoded, err := json.Marshal(routes)
@@ -153,6 +154,27 @@ func TestRouteMapPublishesOnlyHostnames(t *testing.T) {
 	for _, invalid := range []string{"{}", "{", strings.Repeat(" ", (2<<20)+1)} {
 		if parseTunnelRoutes(strings.NewReader(invalid)) != nil {
 			t.Fatal("malformed or oversized inventory must be unavailable")
+		}
+	}
+}
+
+func TestRouteMapProjectsLoopbackOrigins(t *testing.T) {
+	routes := parseTunnelRoutes(strings.NewReader(`{"config":{"ingress":[
+		{"hostname":"app.test","path":"/docs","service":"http://user:secret@127.0.0.1:5556/private?q=secret"},
+		{"hostname":"app.test","service":"http://127.0.0.1:5556"},
+		{"hostname":"app.test","service":"https://[::1]:7878"},
+		{"hostname":"app.test","service":"http://LOCALHOST.:9000"},
+		{"hostname":"app.test","service":"https://internal.example:3000"},
+		{"hostname":"app.test","service":"unix:/private/socket"},
+		{"hostname":"app.test","service":"http_status:404"},
+		{"service":"http_status:404"}]}}`))
+	want := []tunnelOrigin{{"loopback", "http://127.0.0.1:5556"}, {"loopback", "https://[::1]:7878"}, {"loopback", "http://localhost:9000"}, {Kind: "network"}, {Kind: "socket"}, {Kind: "built-in"}}
+	if len(routes) != 1 || !slices.Equal(routes[0].Origins, want) {
+		t.Fatalf("routes = %+v", routes)
+	}
+	for _, service := range []string{"http://localhost.example:7878", "http://localhost:65536", "http://user@internal", "file:///tmp/private"} {
+		if target := describeTunnelOrigin(service); target.Address != "" {
+			t.Fatalf("unexpected address exposed for %q", service)
 		}
 	}
 }

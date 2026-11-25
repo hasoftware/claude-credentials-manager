@@ -8,9 +8,11 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
+	"net/url"
 	"os"
 	"os/exec"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -40,7 +42,48 @@ type tunnelLocal struct {
 
 type tunnelRoute struct {
 	Hostname string
+	Origins  []tunnelOrigin
 	Web      bool // An HTTP(S) ingress rule matches the hostname without a path constraint.
+}
+
+type tunnelOrigin struct {
+	Kind    string
+	Address string `json:",omitempty"`
+}
+
+// Keep only the protocol and loopback authority. Never forward origin credentials,
+// paths, socket filenames, remote hostnames or query strings to the browser.
+func describeTunnelOrigin(service string) tunnelOrigin {
+	switch {
+	case strings.HasPrefix(service, "unix:"), strings.HasPrefix(service, "unix+tls:"):
+		return tunnelOrigin{Kind: "socket"}
+	case strings.HasPrefix(service, "http_status:"), service == "hello_world", service == "hello-world":
+		return tunnelOrigin{Kind: "built-in"}
+	}
+	u, err := url.Parse(service)
+	if err != nil || u.Hostname() == "" {
+		return tunnelOrigin{Kind: "unknown"}
+	}
+	switch u.Scheme {
+	case "http", "https", "ssh", "tcp", "rdp", "smb":
+	default:
+		return tunnelOrigin{Kind: "unknown"}
+	}
+	host := strings.ToLower(strings.TrimSuffix(u.Hostname(), "."))
+	ip, _ := netip.ParseAddr(host)
+	if host != "localhost" && !(ip.Unmap().IsLoopback() && ip.Zone() == "") {
+		return tunnelOrigin{Kind: "network"}
+	}
+	if port := u.Port(); port != "" {
+		n, err := strconv.ParseUint(port, 10, 16)
+		if err != nil || n == 0 {
+			return tunnelOrigin{Kind: "unknown"}
+		}
+		host = net.JoinHostPort(host, port)
+	} else if ip.Is6() {
+		host = "[" + host + "]"
+	}
+	return tunnelOrigin{Kind: "loopback", Address: u.Scheme + "://" + host}
 }
 
 var routeHostname = regexp.MustCompile(`^(\*\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`)
@@ -58,7 +101,7 @@ func localTunnelRoutes(ctx context.Context) []tunnelRoute {
 	return parseTunnelRoutes(resp.Body)
 }
 
-// Only publish distinct configured hostnames. The local config may contain sensitive origin settings.
+// Group ingress rules by published hostname, keeping the distinct sanitized origins for each.
 func parseTunnelRoutes(body io.Reader) []tunnelRoute {
 	var snapshot struct {
 		Config struct {
@@ -78,12 +121,17 @@ func parseTunnelRoutes(body io.Reader) []tunnelRoute {
 			continue
 		}
 		web := rule.Path == "" && !strings.HasPrefix(host, "*.") && (strings.HasPrefix(rule.Service, "https://") || strings.HasPrefix(rule.Service, "http://"))
-		if i, exists := index[host]; exists {
-			routes[i].Web = routes[i].Web || web
-			continue
+		i, exists := index[host]
+		if !exists {
+			i = len(routes)
+			index[host] = i
+			routes = append(routes, tunnelRoute{Hostname: host})
 		}
-		index[host] = len(routes)
-		routes = append(routes, tunnelRoute{Hostname: host, Web: web})
+		routes[i].Web = routes[i].Web || web
+		origin := describeTunnelOrigin(rule.Service)
+		if !slices.Contains(routes[i].Origins, origin) {
+			routes[i].Origins = append(routes[i].Origins, origin)
+		}
 	}
 	return routes
 }
