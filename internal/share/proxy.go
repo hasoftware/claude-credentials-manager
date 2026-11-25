@@ -19,6 +19,7 @@ import (
 	"github.com/hasoftware/claude-credentials-manager/v2/internal/codex/identity"
 	codexmw "github.com/hasoftware/claude-credentials-manager/v2/internal/codex/middleware"
 	"github.com/hasoftware/claude-credentials-manager/v2/internal/codex/transport"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/devices"
 	grokmw "github.com/hasoftware/claude-credentials-manager/v2/internal/grok/middleware"
 	"github.com/hasoftware/claude-credentials-manager/v2/internal/httpx"
 	"github.com/hasoftware/claude-credentials-manager/v2/internal/oauth"
@@ -110,10 +111,11 @@ const maxInvalidGrantFailovers = 16
 // real OAuth bearer, and streams the request to api.anthropic.com via
 // net/http/httputil.ReverseProxy.
 type Proxy struct {
-	listener net.Listener
-	server   *http.Server
-	upstream *url.URL
-	rp       *httputil.ReverseProxy
+	deviceGateway string // protected by modeMu, enabled only for managed shares
+	listener      net.Listener
+	server        *http.Server
+	upstream      *url.URL
+	rp            *httputil.ReverseProxy
 
 	accessToken string // bearer that inbound requests must present in SERVING mode
 
@@ -314,7 +316,7 @@ func NewProxy(bindAddr string) (*Proxy, error) {
 		p.pipelineHandler(terminal).ServeHTTP(w, r)
 	})
 	p.server = &http.Server{
-		Handler:           mux,
+		Handler:           p.withDeviceAccess(mux),
 		ReadHeaderTimeout: 15 * time.Second,
 	}
 	return p, nil
@@ -544,6 +546,14 @@ func (p *Proxy) Transition(accessToken string, tokens tokenSource, pool *credPoo
 	if p.captured == nil {
 		p.modeMu.Unlock()
 		return errors.New("cannot transition: capture never happened")
+	}
+	if name := os.Getenv("CCM_DEVICE_GATEWAY"); name != "" {
+		id, err := devices.Gateway(name, os.Getenv("CCM_DEVICE_ENDPOINT"), accessToken)
+		if err != nil {
+			p.modeMu.Unlock()
+			return err
+		}
+		p.deviceGateway = id
 	}
 	p.accessToken = accessToken
 	p.tokens = tokens

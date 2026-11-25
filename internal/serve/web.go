@@ -18,6 +18,7 @@ import (
 	"github.com/google/uuid"
 	codexoauth "github.com/hasoftware/claude-credentials-manager/v2/internal/codex/oauth"
 	"github.com/hasoftware/claude-credentials-manager/v2/internal/credflow"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/devices"
 	grokoauth "github.com/hasoftware/claude-credentials-manager/v2/internal/grok/oauth"
 	"github.com/hasoftware/claude-credentials-manager/v2/internal/oauth"
 	"github.com/hasoftware/claude-credentials-manager/v2/internal/share"
@@ -318,8 +319,9 @@ func (h *handler) Close() error {
 // templates. The SPA pulls all live data through the JSON API, so
 // there is no credential / session state to thread through here.
 type templateData struct {
-	SSO   bool
-	Title string
+	Devices bool
+	SSO     bool
+	Title   string
 }
 
 // protected wraps next with the auth middleware.
@@ -418,7 +420,7 @@ func (h *handler) appShell(w http.ResponseWriter, r *http.Request) {
 	case "/system":
 		title = "System"
 	}
-	_ = h.pages.app.ExecuteTemplate(w, "layout", templateData{Title: title, SSO: h.cfg.SSO})
+	_ = h.pages.app.ExecuteTemplate(w, "layout", templateData{Title: title, SSO: h.cfg.SSO, Devices: h.cfg.SSO && devices.Enabled()})
 }
 
 // ---- JSON API ----------------------------------------------------

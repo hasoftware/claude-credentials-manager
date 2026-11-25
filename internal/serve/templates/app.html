@@ -76,11 +76,27 @@
 <nav class="section-tabs" aria-label="System sections">
   <a href="#health">Health</a>
   <a href="#connections">Connections</a>
+  {{if .Devices}}<a href="#device-sessions">Devices</a>{{end}}
   <a href="#incidents">Incidents</a>
   <a href="#monitor-settings">Settings</a>
 </nav>
 <div id="health" class="monitor-group"></div>
 <div id="connections" class="monitor-group"></div>
+{{if .Devices}}<section id="device-sessions" class="monitor-group">
+  <header class="card-header"><div><h2>Devices &amp; sessions</h2><p class="card-description">Manage browser access and gateway tickets. Times are shown in ICT.</p></div>
+  <div class="monitor-actions"><button type="button" id="device-refresh" class="btn">Refresh</button><button type="button" id="new-device-ticket" class="btn primary" disabled>Issue device ticket</button></div></header>
+  <label><input type="checkbox" id="device-show-revoked"> Show revoked access</label>
+  <div id="device-tables"></div><p class="system-caption">Gateway clients authenticate with each request. Devices using a shared ticket are grouped by source IP. Location is approximate.</p>
+  <details class="report-panel"><summary>Shared gateway tickets</summary><p>Disable a shared ticket if it was exposed. Named device tickets can be managed individually.</p><div id="shared-ticket-controls"></div></details>
+  <p id="device-feedback" class="muted" role="status"></p>
+  <dialog id="device-dialog" aria-labelledby="device-dialog-title"><h2 id="device-dialog-title">Issue device ticket</h2>
+    <form id="ticket-form"><label>Gateway <select class="input" id="device-gateway" required></select></label>
+    <label>Device name <input class="input" id="device-name" maxlength="80" required placeholder="Office laptop"></label>
+    <button type="submit" id="issue-ticket" class="btn primary">Issue ticket</button></form>
+    <div id="ticket-result" hidden><label>Copy this ticket now. Use it with <code>ccm launch --via</code>.
+    <textarea class="input" id="issued-ticket" rows="4" readonly></textarea></label></div><p id="ticket-error" role="status"></p>
+    <button id="close-ticket" type="button" class="btn">Close</button></dialog>
+</section><script src="/static/devices.js" defer></script>{{end}}
 <div id="incidents" class="monitor-group"></div>
 <section id="monitor-settings" class="report-panel"><h2>Monitoring settings</h2>
   <form id="monitor-form">

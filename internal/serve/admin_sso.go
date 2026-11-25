@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/hasoftware/claude-credentials-manager/v2/internal/devices"
 	"golang.org/x/oauth2"
 )
 
@@ -27,6 +28,7 @@ type AdminSSO struct {
 	verifier         *oidc.IDTokenVerifier
 	origin           string
 	emails, subjects map[string]bool
+	manageDevices    bool
 	logoutEndpoint   string
 	signouts         *adminSignouts
 	seal             cipher.AEAD
@@ -93,7 +95,11 @@ func allowList(raw string, fold bool) map[string]bool {
 	return m
 }
 func NewAdminSSO(ctx context.Context) (*AdminSSO, error) {
-	return newAdminSSO(ctx, strings.TrimRight(os.Getenv("CCM_ADMIN_ORIGIN"), "/"))
+	s, err := newAdminSSO(ctx, strings.TrimRight(os.Getenv("CCM_ADMIN_ORIGIN"), "/"))
+	if err == nil {
+		s.manageDevices = true
+	}
+	return s, err
 }
 func newAdminSSO(ctx context.Context, origin string) (*AdminSSO, error) {
 	issuer := os.Getenv("CCM_OIDC_ISSUER")
@@ -215,6 +221,7 @@ func (s *AdminSSO) callback(w http.ResponseWriter, r *http.Request) {
 	}
 	var c struct {
 		SessionID string `json:"sid"`
+		AuthTime  int64  `json:"auth_time"`
 		Email     string
 		Verified  bool `json:"email_verified"`
 	}
@@ -229,6 +236,24 @@ func (s *AdminSSO) callback(w http.ResponseWriter, r *http.Request) {
 	}
 	if c.SessionID == "" {
 		c.SessionID = oauth2.GenerateVerifier()
+	}
+	if devices.Enabled() {
+		sessionID := devices.ID("web", id.Issuer, s.oauth.ClientID, c.SessionID)
+		name := id.Subject
+		if c.Verified && c.Email != "" {
+			name = c.Email
+		}
+		if err := devices.Web(sessionID, name, r, c.AuthTime, true); err != nil {
+			if errors.Is(err, devices.ErrDenied) {
+				w.Header().Set("Content-Type", "text/html; charset=utf-8")
+				w.WriteHeader(http.StatusForbidden)
+				_, _ = w.Write([]byte(`<h1>This browser session was revoked</h1><form method="post" action="/auth/logout"><button>Sign out of HASOFT</button></form>`))
+			} else {
+				http.Error(w, "Device registry unavailable", 503)
+			}
+			return
+		}
+		c.SessionID = sessionID
 	}
 	s.set(w, sessionName, loginCookie{Subject: id.Subject, SessionID: c.SessionID, IssuedAt: now.UnixNano(), Expiry: expiry.Unix()})
 	target := "/"
@@ -265,6 +290,12 @@ func (s *AdminSSO) Protect(next http.Handler) http.Handler {
 			}
 			if c, ok := s.read(r, sessionName); ok {
 				s.signouts.revoke(c.SessionID)
+				if devices.Enabled() {
+					if err := devices.Revoke(c.SessionID); err != nil && !errors.Is(err, os.ErrNotExist) {
+						http.Error(w, "Could not record sign-out. Try again.", 503)
+						return
+					}
+				}
 			}
 			clearAdminCookie(w, sessionName)
 			target := s.logoutEndpoint
@@ -286,7 +317,17 @@ func (s *AdminSSO) Protect(next http.Handler) http.Handler {
 			_, _ = w.Write(page)
 			return
 		}
-		if a, ok := s.read(r, sessionName); !ok || a.Subject == "" || s.signouts.revoked(a) {
+		a, ok := s.read(r, sessionName)
+		if ok && a.Subject != "" && devices.Enabled() {
+			err := devices.Web(a.SessionID, "", r, 0, false)
+			if errors.Is(err, devices.ErrDenied) || errors.Is(err, os.ErrNotExist) {
+				ok = false
+			} else if err != nil {
+				http.Error(w, "Device registry unavailable", 503)
+				return
+			}
+		}
+		if !ok || a.Subject == "" || s.signouts.revoked(a) {
 			if strings.HasPrefix(r.URL.Path, "/api/") {
 				writeJSON(w, 401, map[string]string{"error": "SSO login required"})
 				return
@@ -296,6 +337,10 @@ func (s *AdminSSO) Protect(next http.Handler) http.Handler {
 				return
 			}
 			s.start(w, r)
+			return
+		}
+		if r.URL.Path == "/api/system/devices" || strings.HasPrefix(r.URL.Path, "/api/system/devices/") {
+			s.deviceAPI(w, r, a.SessionID)
 			return
 		}
 		if r.URL.Path == "/login" {

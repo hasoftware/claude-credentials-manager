@@ -296,3 +296,5 @@ dialog::backdrop {background:#18171570}
 #monitor-form textarea {min-height:68px}
 #monitor-form p {color:var(--muted-ink)} .monitor-actions {display:flex;gap:8px;flex-wrap:wrap}
 @media(max-width:520px){.system-list li {grid-template-columns:1fr;gap:2px}.system-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.system-metrics article{padding:10px}.system-metrics strong{font-size:20px}}
+
+.device-scroll{overflow-x:auto}.device-scroll table{width:100%;border-collapse:collapse}.device-scroll th,.device-scroll td{text-align:left;vertical-align:top;padding:.65rem .7rem;border-bottom:1px solid var(--line)}.device-scroll small{display:block;color:var(--muted-ink);max-width:28ch;overflow-wrap:anywhere;margin-top:.3rem}.device-scroll td:nth-child(2){font-family:monospace}.device-scroll th{white-space:nowrap}#device-tables{display:grid;gap:1rem}#device-dialog{color:var(--ink);background:var(--canvas);border:1px solid var(--line);border-radius:12px;max-width:min(28rem,90vw);padding:1.5rem}#device-dialog::backdrop{background:#0008}#device-dialog label{display:grid;gap:.4rem;margin:.75rem 0}#device-dialog textarea{width:100%}
