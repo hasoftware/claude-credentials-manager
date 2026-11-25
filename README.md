@@ -251,6 +251,8 @@ Both flags required. The endpoint must be a full URL with `http`/`https` scheme 
 
 The CCM2 dashboard embeds the HASOFT theme from DESIGN.md. For a dedicated Dex v2.46.1 frontend, copy its stock web directory, overlay the two files from deploy/dex/templates into templates/, and place deploy/dex/theme/styles.css and internal/serve/static/design.css together in themes/hasoft/. Set frontend.dir to this web directory and frontend.theme to hasoft, then restart Dex.
 
+For the HASOFT tunnel deployment, point the SSO hostname at `http://127.0.0.1:5556`, run Caddy with `deploy/dex/Caddyfile`, and set Dex's `web.http` to `127.0.0.1:5557`. A direct visit to the SSO root starts sign-in through CCM2 so the client can establish OIDC state before showing the HASOFT form. Discovery and authorization requests pass through to Dex. Set the CCM2 URL in the Caddyfile when deploying on a different domain.
+
 Use `ccm serve --sso --bind-host 127.0.0.1 --bind-port 7878` behind an HTTPS reverse proxy on the same host. Run the dashboard as the same OS user and with the same `CCM_HOME` as the gateway. Configure the private environment file for the service:
 
 | Setting | Value |
