@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{.Title}} · ccm serve</title>
-  <link rel="stylesheet" href="/static/style.css?v=inter1">
+  <link rel="stylesheet" href="/static/style.css?v=nav2">
 </head>
 <body>
-  <main>{{template "body" .}}</main>
+  {{block "page" .}}<main>{{template "body" .}}</main>{{end}}
 </body>
 </html>
 {{end}}

@@ -10,13 +10,11 @@
 
   var POLL_MS = 3000;
   var portal = document.getElementById("relogin-portal");
-  var appRoot = document.getElementById("app");
 
   // Inline SVG glyphs used by dialogs. Keeping them here avoids an
   // extra HTTP round-trip for icons.
   var ICON_COPY = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
   var ICON_CHECK = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-  var ICON_PLUS = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>';
 
   /* ---- rendering --------------------------------------------------- */
 
@@ -24,27 +22,35 @@
   // (one poll hiccup) don't wipe the table.
   var lastCredentials = null;
 
-  function renderShell() {
-    appRoot.innerHTML = [
-      '<div class="card">',
-      '  <header class="card-header"><div>',
-      '    <h1 class="card-title" id="accounts">Accounts</h1>',
-      '    <p class="card-description">Manage gateway accounts and renew provider access.</p>',
-      '  </div><button class="btn primary" id="add-credential-btn" type="button">' + ICON_PLUS + ' Add credential</button></header>',
-      '  <dl class="metrics" aria-label="Account overview">',
-      '    <div><dt>Credentials</dt><dd id="metric-total">—</dd></div>',
-      '    <div><dt>Expired tokens</dt><dd id="metric-expired">—</dd></div>',
-      '    <div><dt>Dashboard shares</dt><dd id="metric-shared">—</dd></div>',
-      '  </dl>',
-      '  <div class="list-header"><h2>Credentials</h2><span id="last-updated" class="muted">Loading…</span></div>',
-      '  <div id="table-mount"></div>',
-      '</div>',
-      '<div id="toast-root"></div>',
-      '<div id="reconnect">reconnecting…</div>',
-    ].join("\n");
-    document
-      .getElementById("add-credential-btn")
-      .addEventListener("click", openLoginDialog);
+  function renderShares(creds) {
+    var mount = document.getElementById("share-list");
+    var shares = creds.filter(cred => cred.session);
+    if (!shares.length) {
+      mount.textContent = "No active dashboard shares.";
+      return;
+    }
+    var list = document.createElement("ul");
+    list.className = "share-list";
+    shares.forEach(cred => {
+      var row = document.createElement("li");
+      var account = document.createElement("div");
+      account.className = "share-account";
+      var name = document.createElement("strong");
+      name.textContent = cred.name || cred.id.slice(0, 8);
+      var mode = document.createElement("small");
+      mode.textContent = (providerNames.get(cred.provider) || cred.provider) + " · " + cred.session.mode;
+      account.append(name, mode);
+      var config = document.createElement("button");
+      config.type = "button";
+      config.className = "btn sm config-trigger";
+      config.dataset.id = cred.id;
+      config.textContent = "Config";
+      config.setAttribute("aria-label", "Config for " + name.textContent);
+      config.setAttribute("aria-haspopup", "dialog");
+      row.append(account, config);
+      list.append(row);
+    });
+    mount.replaceChildren(list);
   }
 
   function renderTable(creds) {
@@ -72,9 +78,6 @@
         '</tr></thead>' +
         '<tbody>' + rows + '</tbody>' +
       '</table>';
-    mount.querySelectorAll(".config-trigger").forEach(function (button) {
-      button.addEventListener("click", function () { openAccountConfig(button.dataset.id); });
-    });
   }
 
   var quotaCache = new Map();
@@ -264,7 +267,7 @@
       syncAccountConfig = null;
       dlg.remove();
       if (!document.querySelector("dialog[open]")) {
-        var trigger = appRoot.querySelector('.config-trigger[data-id="' + CSS.escape(id) + '"]');
+        var trigger = document.querySelector('#app [role="tabpanel"]:not([hidden]) .config-trigger[data-id="' + CSS.escape(id) + '"]');
         if (trigger) trigger.focus({preventScroll:true});
       }
     }, {once:true});
@@ -307,6 +310,7 @@
         lastCredentials = next;
         if (changed) {
           renderTable(lastCredentials);
+          renderShares(lastCredentials);
           if (syncAccountConfig) syncAccountConfig();
         }
         updateAccountQuotas(lastCredentials);
@@ -884,7 +888,11 @@
     });
     if (choices.length === 1 && portal.dataset.selected === "true") openRelogin(choices[0].dataset);
   } else {
-    renderShell();
+    document.getElementById("add-credential-btn").addEventListener("click", openLoginDialog);
+    document.getElementById("app").addEventListener("click", function (event) {
+      var trigger = event.target.closest("button.config-trigger");
+      if (trigger) openAccountConfig(trigger.dataset.id);
+    });
     startPolling();
   }
 })();

@@ -388,10 +388,10 @@ func TestAppShell(t *testing.T) {
 		Loopback: true,
 	})
 	for _, tt := range []struct{ path, title, marker, absent string }{
-		{"/", "Dashboard", `src="/static/usage.js"`, `src="/static/app.js"`},
+		{"/", "Dashboard", `src="/static/usage.js"`, `src="/static/app.js`},
 		{"/accounts", "Accounts", `id="app"`, `id="report-month"`},
-		{"/tutorial", "Tutorial", "ccm2 relogin --web codex", `src="/static/app.js"`},
-		{"/system", "System", `src="/static/system.js"`, `src="/static/app.js"`},
+		{"/tutorial", "Tutorial", "ccm2 relogin --web codex", `src="/static/app.js`},
+		{"/system", "System", `src="/static/system.js?v=nav2"`, `src="/static/app.js`},
 	} {
 		resp, err := http.Get(srv.URL + tt.path)
 		if err != nil {
@@ -399,7 +399,7 @@ func TestAppShell(t *testing.T) {
 		}
 		body, err := io.ReadAll(resp.Body)
 		resp.Body.Close()
-		if err != nil || resp.StatusCode != 200 || !strings.Contains(string(body), tt.marker) || strings.Contains(string(body), tt.absent) || !strings.Contains(string(body), `aria-current="page">`+tt.title+`</a>`) {
+		if err != nil || resp.StatusCode != 200 || !strings.Contains(string(body), tt.marker) || strings.Contains(string(body), tt.absent) || !strings.Contains(string(body), `href="`+tt.path+`" aria-current="page"`) || !strings.Contains(string(body), `class="section-tabs"`) {
 			t.Errorf("unexpected %s panel: HTTP %d %v", tt.path, resp.StatusCode, err)
 		}
 	}

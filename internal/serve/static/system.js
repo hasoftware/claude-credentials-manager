@@ -34,9 +34,11 @@
   }
   const size=n=>(n/1073741824).toLocaleString("en",{maximumFractionDigits:2})+" GiB";
   function render(r) {
-    const root=el("monitor-status");
+    const health=el("health");
+    const connections=el("connections");
+    const incidents=el("incidents");
     const time=el("monitor-time");
-    if(r.waiting){root.replaceChildren();time.textContent="Waiting for ccm-monitor to publish its first sample.";return;}
+    if(r.waiting){for(const group of [health,connections,incidents]) group.replaceChildren();time.textContent="Waiting for ccm-monitor to publish its first sample.";return;}
     const stale=Date.now()-Date.parse(r.At)>90000;
     time.classList.toggle("stale",stale);
     time.textContent=(stale?"Monitor data is stale · ":"Last sample · ")+date(r.At)+" ICT · "+r.Host.Host;
@@ -73,7 +75,9 @@
     const history=section("Incident history","Service and tunnel readiness alerts trigger after three consecutive failures. Confirmed provider 401s and unrecognized connector IDs are reported on detection.");
     list(history,[...(r.Changes||[])].reverse().map(c=>[date(c.At),c.Message]),"No incident transitions recorded.");
     history.append(node("p","Last Telegram delivery · "+(r.LastDelivery||"No delivery recorded"),"system-caption"));
-    root.replaceChildren(resources,services,tunnel,clients,accounts,history);
+    health.replaceChildren(resources,services,accounts);
+    connections.replaceChildren(tunnel,clients);
+    incidents.replaceChildren(history);
   }
   async function api(url,body) {
     const opts={cache:"no-store"};
@@ -98,9 +102,14 @@
     el("monitor-test").disabled=!s.HasBot||!s.ChatID;el("monitor-save").disabled=false;loaded=true;
   }
   async function loadConfig(){try{showConfig(await api("/api/system/settings"));}catch(e){feedback.textContent=e.message;}}
-  detail.addEventListener("toggle",()=>{if(detail.open&&!loaded)loadConfig();});
-  el("settings-link").addEventListener("click",()=>{detail.open=true;});
-  if(location.hash==="#monitor-settings")detail.open=true;
+  let loadingConfig=false;
+  async function onSectionChange() {
+    if(detail.hidden || loaded || loadingConfig) return;
+    loadingConfig=true;
+    try { await loadConfig(); } finally { loadingConfig=false; }
+  }
+  document.addEventListener("sectionchange",onSectionChange);
+  onSectionChange();
   form.addEventListener("submit",async e=>{
     e.preventDefault();if(!loaded)return;
     const body={};for(const k of ["Telegram","ClearCloud","ClearBot"])body[k]=field(k).checked;

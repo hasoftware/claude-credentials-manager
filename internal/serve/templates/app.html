@@ -1,20 +1,37 @@
+{{define "page"}}
+<a class="skip-nav" href="#workspace">Skip to content</a>
+<div class="admin-shell">
+  <aside class="admin-sidebar">
+    <div class="sidebar-head">
+      <a class="brand" href="/" aria-label="HASOFT CCM2 dashboard"><span class="brand-mark" aria-hidden="true">H</span><span>HASOFT</span><span class="brand-product">CCM2</span></a>
+      <button id="menu-button" class="btn sm" type="button" aria-controls="sidebar-menu" aria-expanded="false" hidden>Menu</button>
+    </div>
+    <div id="sidebar-menu">
+      <nav class="primary-nav" aria-label="CCM2">
+        <a href="/" {{if eq .Title "Dashboard"}}aria-current="page"{{end}}><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Dashboard</a>
+        <a href="/accounts" {{if eq .Title "Accounts"}}aria-current="page"{{end}}><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="10" cy="8" r="3.3"/><path d="M3 20v-1.5a6.5 6.5 0 0 1 13 0V20m0-15a3.3 3.3 0 0 1 0 6.5M18 14a5 5 0 0 1 3 4.5V20"/></svg>Accounts</a>
+        <a href="/system" {{if eq .Title "System"}}aria-current="page"{{end}}><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="14" rx="2"/><path d="M8 21h8m-4-3v3M5 11h3l2-4 3.5 8 2-4h3"/></svg>System</a>
+        <a href="/tutorial" {{if eq .Title "Tutorial"}}aria-current="page"{{end}}><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 6.5C9 4.5 6 4 2.8 4.8v14c3.2-.8 6.2-.3 9.2 1.7 3-2 6-2.5 9.2-1.7v-14C18 4 15 4.5 12 6.5zm0 0v14"/></svg>Tutorial</a>
+      </nav>
+      {{if .SSO}}<form class="sidebar-footer" action="/auth/logout" method="post"><button class="btn ghost sm" type="submit">Sign out</button></form>{{end}}
+    </div>
+  </aside>
+  <main id="workspace" tabindex="-1">{{template "body" .}}</main>
+</div>
+{{end}}
 {{define "body"}}
-<header class="brand-bar">
-  <div class="brand"><span class="brand-mark" aria-hidden="true">H</span><span>HASOFT</span><span class="brand-product">CCM2</span></div>
-  {{if .SSO}}<form action="/auth/logout" method="post"><button class="btn ghost sm" type="submit">Sign out</button></form>{{end}}
-</header>
-<nav class="panel-nav" aria-label="CCM2">
-  <a href="/" {{if eq .Title "Dashboard"}}aria-current="page"{{end}}>Dashboard</a>
-  <a href="/accounts" {{if eq .Title "Accounts"}}aria-current="page"{{end}}>Accounts</a>
-  <a href="/system" {{if eq .Title "System"}}aria-current="page"{{end}}>System</a>
-  <a href="/tutorial" {{if eq .Title "Tutorial"}}aria-current="page"{{end}}>Tutorial</a>
-</nav>
+<script src="/static/navigation.js" defer></script>
 {{if eq .Title "Dashboard"}}
 <script>if (location.hash === "#accounts" || location.hash === "#tutorial") location.replace("/" + location.hash.slice(1));</script>
 <section id="usage" aria-labelledby="usage-title">
   <header class="card-header report-head"><div><h1 class="card-title" id="usage-title">Gateway overview</h1><p class="card-description">Token activity across your gateway accounts.</p></div>
   </header>
+<nav class="section-tabs" aria-label="Dashboard sections">
+  <a href="#overview">Overview</a>
+  <a href="#models">By model</a>
+</nav>
   <div class="report-controls"><label>Reporting month <input type="month" id="report-month" required></label><span>Vietnam time · UTC+7</span></div>
+  <div id="overview">
   <dl class="token-stats">
     <div><dt>Tokens today</dt><dd id="usage-today">—</dd><small id="usage-today-note"></small></div>
     <div><dt>Tokens this period</dt><dd id="usage-month">—</dd><small id="usage-month-note"></small></div>
@@ -25,16 +42,44 @@
       <div id="token-chart"></div><p id="day-detail" class="day-detail"></p></section>
     <section class="report-panel"><h2>Token breakdown</h2><div id="token-mix"></div></section>
   </div>
-  <section class="report-panel model-panel"><h2>Usage by model</h2><div id="model-usage"></div></section>
+  </div>
+  <section id="models" class="report-panel model-panel"><h2>Usage by model</h2><div id="model-usage"></div></section>
 </section>
 <script src="/static/usage.js" defer></script>
 {{else if eq .Title "Accounts"}}
-<div id="app"></div>
-<script src="/static/app.js" defer></script>
+<section id="app">
+  <header class="card-header"><div><h1 class="card-title">Accounts</h1><p class="card-description">Manage gateway accounts and renew provider access.</p></div>
+    <button class="btn primary" id="add-credential-btn" type="button">Add credential</button>
+  </header>
+<nav class="section-tabs" aria-label="Accounts sections">
+  <a href="#credentials">Credentials</a>
+  <a href="#shares">Active shares</a>
+</nav>
+  <div id="credentials">
+    <dl class="metrics" aria-label="Account overview">
+      <div><dt>Credentials</dt><dd id="metric-total">—</dd></div>
+      <div><dt>Expired tokens</dt><dd id="metric-expired">—</dd></div>
+      <div><dt>Dashboard shares</dt><dd id="metric-shared">—</dd></div>
+    </dl>
+    <div class="list-header"><h2>Credentials</h2><span id="last-updated" class="muted">Loading…</span></div>
+    <div id="table-mount"></div>
+  </div>
+  <section id="shares" class="report-panel"><h2>Active shares</h2><div id="share-list"><p class="muted">Loading…</p></div></section>
+</section>
+<div id="toast-root"></div><div id="reconnect">reconnecting…</div>
+<script src="/static/app.js?v=nav2" defer></script>
 {{else if eq .Title "System"}}
-<header class="card-header"><div><h1 class="card-title">System</h1><p class="card-description" id="monitor-time" role="status">Loading monitor status…</p></div><a class="btn" href="#monitor-settings" id="settings-link">Settings</a></header>
-<div id="monitor-status"></div>
-<details id="monitor-settings" class="report-panel"><summary>Monitoring settings</summary>
+<header class="card-header"><div><h1 class="card-title">System</h1><p class="card-description" id="monitor-time" role="status">Loading monitor status…</p></div></header>
+<nav class="section-tabs" aria-label="System sections">
+  <a href="#health">Health</a>
+  <a href="#connections">Connections</a>
+  <a href="#incidents">Incidents</a>
+  <a href="#monitor-settings">Settings</a>
+</nav>
+<div id="health" class="monitor-group"></div>
+<div id="connections" class="monitor-group"></div>
+<div id="incidents" class="monitor-group"></div>
+<section id="monitor-settings" class="report-panel"><h2>Monitoring settings</h2>
   <form id="monitor-form">
   <fieldset><legend>Telegram alerts</legend>
     <label><input name="Telegram" type="checkbox"> Send incident and recovery notifications</label>
@@ -57,20 +102,25 @@
   </fieldset>
   <div class="monitor-actions"><button class="btn primary" id="monitor-save" type="submit" disabled>Save settings</button><button class="btn" type="button" id="monitor-test" disabled>Send test message</button></div>
   <p id="monitor-feedback" role="status"></p></form>
-</details><script src="/static/system.js" defer></script>
+</section><script src="/static/system.js?v=nav2" defer></script>
 {{else}}
 <article class="tutorial" lang="vi">
   <header class="card-header"><div><h1 class="card-title">Tutorial</h1><p class="card-description">Hướng dẫn quản lý tài khoản và theo dõi gateway CCM2.</p></div></header>
-  <section><h2>Thêm tài khoản</h2>
+<nav class="section-tabs" aria-label="Tutorial sections">
+  <a href="#add-account">Thêm tài khoản</a>
+  <a href="#relogin">Đăng nhập lại</a>
+  <a href="#usage-guide">Quota và token</a>
+</nav>
+  <section id="add-account"><h2>Thêm tài khoản</h2>
     <ol><li>Mở <a href="/accounts">Accounts</a> và chọn <strong>Add credential</strong>.</li>
     <li>Chọn Claude, Codex hoặc Grok rồi nhấn <strong>Continue</strong>. Đăng nhập tại trang ủy quyền của nhà cung cấp.</li>
     <li>Với Claude, dán mã ủy quyền vào CCM2. Với Codex hoặc Grok, sao chép toàn bộ URL localhost từ thanh địa chỉ, dán vào ô <strong>Paste redirect URL</strong> và nhấn <strong>Submit</strong>.</li></ol></section>
-  <section><h2>Đăng nhập lại khi token bị thu hồi</h2>
+  <section id="relogin"><h2>Đăng nhập lại khi token bị thu hồi</h2>
     <p>Khi thấy lỗi <code>401 token_revoked</code>, mở <a href="/accounts">Accounts</a>, chọn <strong>Config → Relogin</strong> trên đúng tài khoản Codex hoặc Grok. Bạn cũng có thể mở cổng SSO từ PowerShell bằng một trong hai lệnh sau.</p>
     <pre><code>ccm2 relogin --web codex
 ccm2 relogin --web grok</code></pre>
     <p>Đăng nhập HASOFT, mở liên kết ủy quyền rồi dán URL trả về vào cùng hộp thoại. Trang localhost có thể không tải được, nhưng URL trên thanh địa chỉ vẫn dùng được.</p></section>
-  <section><h2>Xem quota và lượng token</h2>
+  <section id="usage-guide"><h2>Xem quota và lượng token</h2>
     <p>Trong <a href="/accounts">Accounts</a>, hai cột <strong>5 hours</strong> và <strong>Weekly</strong> hiển thị phần trăm hạn mức đã dùng. <strong>Not reported</strong> nghĩa là nhà cung cấp chưa trả số liệu cho kỳ đó. Chọn <strong>Config → Quota details</strong> để xem các kỳ mà nhà cung cấp báo về.</p>
     <p>Mở <a href="/">Dashboard</a> để xem số token gateway đã ghi nhận hôm nay, chọn tháng báo cáo hoặc bấm vào một ngày trên biểu đồ để xem số chính xác. Các ngày tính theo giờ Việt Nam (UTC+7).</p></section>
 </article>
